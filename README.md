@@ -86,7 +86,6 @@ iot-web/
 ├── Frontend/          # React.js フロントエンド
 ├── Backend/           # Python バックエンド
 ├── docs/              # ドキュメント
-├── docker/            # Docker設定
 └── README.md          # このファイル
 ```
 
