@@ -27,21 +27,41 @@ iot-web/
 │   ├── postcss.config.js    # PostCSS 設定（tailwindcss + autoprefixer）
 │   ├── vite.config.ts       # Vite 設定（@vitejs/plugin-react）
 │   └── index.html           # エントリ HTML（#root）
-├── Backend/                 # バックエンドアプリケーション
-│   ├── src/                 # ソースコード
-│   │   ├── controllers/     # コントローラー
-│   │   ├── models/          # データモデル
-│   │   ├── services/        # ビジネスロジック
-│   │   ├── routes/          # ルーティング
-│   │   ├── middleware/      # ミドルウェア
-│   │   ├── utils/           # ユーティリティ関数
-│   │   ├── config/          # 設定ファイル
-│   │   └── types/           # TypeScript型定義
-│   ├── tests/               # テストファイル
-│   ├── docs/                # バックエンド固有ドキュメント
-│   ├── package.json         # 依存関係管理
-│   ├── tsconfig.json        # TypeScript設定
-│   └── .env.example         # 環境変数サンプル
+├── backend/                 # バックエンドサーバー関連のファイルを格納
+│   ├── app/                 # FastAPIアプリケーションのメインソースコード
+│   │   ├── __init__.py      # このディレクトリをPythonパッケージとして認識させるためのファイル
+│   │   ├── main.py          # FastAPIアプリケーションを起動する中心ファイル
+│   │   ├── crud/            # データベースの操作（作成, 読込, 更新, 削除）に関するロジック
+│   │   │   ├── __init__.py  # crudディレクトリをパッケージとして認識させる
+│   │   │   ├── research_crud.py # 研究内容に関するDB操作を記述
+│   │   │   └── calendar_crud.py # カレンダーに関するDB操作を記述
+│   │   ├── models/          # データベースのテーブル構造を定義するファイル（ORMモデル）
+│   │   │   ├── __init__.py  # modelsディレクトリをパッケージとして認識させる
+│   │   │   ├── research.py  # 研究内容テーブルのモデル
+│   │   │   └── event.py     # イベントテーブルのモデル
+│   │   ├── schemas/         # APIでやり取りするデータの型や形式を定義するファイル（Pydanticスキーマ）
+│   │   │   ├── __init__.py  # schemasディレクトリをパッケージとして認識させる
+│   │   │   ├── research.py  # 研究内容APIのデータ形式を定義
+│   │   │   └── contact.py   # 問い合わせAPIのデータ形式を定義
+│   │   ├── api/             # APIのエンドポイント（URLの各窓口）を定義するファイル群
+│   │   │   ├── __init__.py  # apiディレクトリをパッケージとして認識させる
+│   │   │   ├── api_v1.py    # APIのバージョン1のエンドポイントをまとめるファイル
+│   │   │   └── endpoints/   # 各機能のエンドポイントを個別に定義
+│   │   │       ├── __init__.py # endpointsディレクトリをパッケージとして認識させる
+│   │   │       ├── research.py # 研究内容に関するAPI
+│   │   │       ├── calendar.py # カレンダーに関するAPI
+│   │   │       ├── contact.py  # 問い合わせに関するAPI
+│   │   │       ├── news.py     # ニュースに関するAPI
+│   │   │       └── chatbot.py  # チャットボットに関するAPI（WebSocketなど）
+│   │   ├── core/            # アプリケーション全体の設定ファイルなどを格納
+│   │   │   └── config.py    # 環境変数などの設定を読み込む
+│   │   └── db/              # データベース接続に関する設定
+│   │       └── session.py   # データベースセッションを管理
+│   ├── static/              # 動画や画像など、プログラムを介さずに直接配信するファイル
+│   │   └── videos/
+│   │       └── intro_video.mp4 # 紹介動画ファイル
+│   ├── tests/               # アプリケーションのテストコード
+│   └── requirements.txt     # バックエンドで必要なPythonライブラリの一覧
 ├── docs/                    # プロジェクト全体ドキュメント
 │   ├── design/              # 設計ドキュメント
 │   │   ├── ui-ux/           # UI/UX設計書
@@ -70,9 +90,12 @@ iot-web/
 │   ├── requirement.md       # 要件定義
 │   ├── tech-stack.md        # 技術スタック
 │   └── README.md            # ドキュメント概要
-├── .github/                 # GitHub設定
-│   ├── workflows/           # GitHub Actions
-│   └── ISSUE_TEMPLATE/      # Issueテンプレート
+├── metaverse_assets/         # cluster（メタバース）にアップロードする3Dモデルなどの素材置き場
+│   ├── models/               # 3Dモデルファイル（.glbなど）
+│   └── images/               # テクスチャなどの画像ファイル
+├── .github/                  # GitHub設定
+│   ├── workflows/            # GitHub Actions
+│   └── ISSUE_TEMPLATE/       # Issueテンプレート
 ├── .vscode/                 # VS Code設定
 │   ├── settings.json        # ワークスペース設定
 │   ├── extensions.json      # 推奨拡張機能
@@ -106,51 +129,47 @@ Frontend/src/
 
 ## バックエンド詳細構造
 
-### src/ディレクトリ
+### app/ディレクトリ（FastAPI構成）
 ```
-Backend/src/
-├── controllers/             # コントローラー
-│   ├── authController.ts    # 認証コントローラー
-│   ├── userController.ts    # ユーザーコントローラー
-│   ├── researchController.ts # 研究関連コントローラー
-│   ├── newsController.ts    # ニュースコントローラー
-│   └── adminController.ts   # 管理画面コントローラー
-├── models/                  # データモデル
-│   ├── User.ts              # ユーザーモデル
-│   ├── Research.ts          # 研究関連モデル
-│   ├── News.ts              # ニュースモデル
-│   └── Paper.ts             # 論文モデル
-├── services/                # ビジネスロジック
-│   ├── authService.ts       # 認証サービス
-│   ├── userService.ts       # ユーザーサービス
-│   ├── researchService.ts   # 研究関連サービス
-│   └── newsService.ts       # ニュースサービス
-├── routes/                  # ルーティング
-│   ├── auth.ts              # 認証ルート
-│   ├── users.ts             # ユーザールート
-│   ├── research.ts          # 研究関連ルート
-│   ├── news.ts              # ニュースルート
-│   └── admin.ts             # 管理画面ルート
-├── middleware/              # ミドルウェア
-│   ├── auth.ts              # 認証ミドルウェア
-│   ├── validation.ts        # バリデーションミドルウェア
-│   ├── errorHandler.ts      # エラーハンドリング
-│   └── cors.ts              # CORS設定
-├── utils/                   # ユーティリティ関数
-│   ├── database.ts          # データベース接続
-│   ├── jwt.ts               # JWT処理
-│   ├── validation.ts        # バリデーション関数
-│   └── logger.ts            # ログ出力
-├── config/                  # 設定ファイル
-│   ├── database.ts          # データベース設定
-│   ├── jwt.ts               # JWT設定
-│   ├── cors.ts              # CORS設定
-│   └── env.ts               # 環境変数設定
-└── types/                   # TypeScript型定義
-    ├── express.ts           # Express型拡張
-    ├── user.ts              # ユーザー型定義
-    ├── research.ts          # 研究関連型定義
-    └── common.ts            # 共通型定義
+backend/app/
+├── __init__.py              # Pythonパッケージ認識ファイル
+├── main.py                  # FastAPIアプリケーション起動ファイル
+├── crud/                    # データベース操作ロジック
+│   ├── __init__.py          # crudパッケージ認識ファイル
+│   ├── research_crud.py     # 研究内容DB操作
+│   └── calendar_crud.py     # カレンダーDB操作
+├── models/                  # データベーステーブル構造定義（ORMモデル）
+│   ├── __init__.py          # modelsパッケージ認識ファイル
+│   ├── research.py          # 研究内容テーブルモデル
+│   └── event.py             # イベントテーブルモデル
+├── schemas/                 # APIデータ型・形式定義（Pydanticスキーマ）
+│   ├── __init__.py          # schemasパッケージ認識ファイル
+│   ├── research.py          # 研究内容APIデータ形式
+│   └── contact.py           # 問い合わせAPIデータ形式
+├── api/                     # APIエンドポイント定義
+│   ├── __init__.py          # apiパッケージ認識ファイル
+│   ├── api_v1.py            # API v1エンドポイント統合
+│   └── endpoints/           # 機能別エンドポイント
+│       ├── __init__.py      # endpointsパッケージ認識ファイル
+│       ├── research.py      # 研究内容API
+│       ├── calendar.py      # カレンダーAPI
+│       ├── contact.py       # 問い合わせAPI
+│       ├── news.py          # ニュースAPI
+│       └── chatbot.py       # チャットボットAPI（WebSocket）
+├── core/                    # アプリケーション全体設定
+│   └── config.py            # 環境変数等設定読み込み
+└── db/                      # データベース接続設定
+    └── session.py           # データベースセッション管理
+```
+
+### その他のバックエンドファイル
+```
+backend/
+├── static/                  # 静的ファイル配信
+│   └── videos/
+│       └── intro_video.mp4  # 紹介動画ファイル
+├── tests/                   # テストコード
+└── requirements.txt         # Pythonライブラリ依存関係
 ```
 
 ## 命名規則
@@ -199,8 +218,10 @@ Backend/src/
 
 | 日付 | バージョン | 変更内容 | 担当者 |
 |------|------------|----------|--------|
-| まだ決まっていない | v1.0 | 初版作成 | まだ決まっていない |
+|| 2025-01-15 | v1.0 | 初版作成 | プロジェクトチーム |
+|| 2025-01-15 | v1.1 | バックエンド構成をFastAPIベースに更新 | バックエンド担当 |
 
 ## 参考資料
 
-- まだ決まっていない
+- https://haru-ni.net（参考サイト）
+- https://codeforyamaguchi.org（参考プロジェクト）
