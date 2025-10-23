@@ -27,13 +27,6 @@ export const Header: React.FC = () => {
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/" className="text-base font-semibold tracking-tight">
-            Smart ICT Lab
-          </Link>
-          <Separator orientation="vertical" className="hidden h-6 md:inline-flex" />
-          <p className="hidden text-sm text-muted-foreground md:block">
-            情報システムデザイン学系 スマートICTソリューション研究室
-          </p>
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
