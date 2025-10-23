@@ -59,6 +59,52 @@
 }
 
 
+@layer components {
+  .mask-bg {
+    color: transparent;
+    display: inline-block;
+    overflow: hidden;
+    position: relative;
+    transition: color 0ms 450ms;
+  }
+
+  .mask-bg::after {
+    background: #ffffff;
+    bottom: 0;
+    content: "";
+    display: block;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translate(0, 100%);
+  }
+
+  .mask-bg.is-animated {
+    color: #000000;
+  }
+
+  .mask-bg.is-animated::after {
+    animation: mask-bg 1.2s cubic-bezier(0.8, 0, 0.17, 1);
+  }
+}
+
+@keyframes mask-bg {
+  0% {
+    transform: translate(0, 101%);
+  }
+
+  40%,
+  60% {
+    transform: translate(0, 0%);
+  }
+
+  100% {
+    transform: translate(0, -100%);
+  }
+}
+
+
 
 @layer base {
   * {
