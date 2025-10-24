@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatsSection } from "@/components/ui/stats-card"
 import { siteNavigation } from "@/config/navigation"
 import { cn } from "@/lib/utils"
+import LoginDialog from "@/components/auth/LoginDialog"
+import { useAuth } from "@/context/AuthContext"
 
 const RESEARCH_FIELDS = [
   {
@@ -38,6 +40,9 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   )
 
 export const Home: React.FC = () => {
+  const { isAuthenticated } = useAuth()
+  const [loginOpen, setLoginOpen] = useState(false)
+  const navigate = useNavigate()
   const [fieldsVisible, setFieldsVisible] = useState<boolean[]>(createBooleanArray(RESEARCH_FIELDS.length))
   const [contentVisible, setContentVisible] = useState<boolean[]>(createBooleanArray(siteNavigation.length))
   const [fieldsStarted, setFieldsStarted] = useState(false)
@@ -101,6 +106,7 @@ export const Home: React.FC = () => {
   }, [contentStarted])
 
   return (
+    <>
     <div className="w-full space-y-16 py-12">
       <section className="px-8">
         <div className="flex flex-col-reverse gap-6 md:flex-row md:items-start md:justify-between">
@@ -114,17 +120,30 @@ export const Home: React.FC = () => {
           </div>
           <nav className="w-fit self-start rounded-full border border-gray-200 bg-white px-8 py-4 shadow-lg">
             <div className="flex items-center gap-4">
-              {siteNavigation.map((item) => (
-                <NavLink key={item.to} to={item.to} className={navLinkClass}>
-                  {item.label}
-                  <div
-                    className={cn(
-                      "absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 transition-opacity duration-200",
-                      item.to === "/" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    )}
-                  ></div>
-                </NavLink>
-              ))}
+              {siteNavigation.map((item) => {
+                const isCalendar = item.to === "/calendar"
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={navLinkClass}
+                    onClick={(e) => {
+                      if (isCalendar && !isAuthenticated) {
+                        e.preventDefault()
+                        setLoginOpen(true)
+                      }
+                    }}
+                  >
+                    {item.label}
+                    <div
+                      className={cn(
+                        "absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 transition-opacity duration-200",
+                        item.to === "/" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}
+                    ></div>
+                  </NavLink>
+                )
+              })}
             </div>
           </nav>
         </div>
@@ -220,6 +239,15 @@ export const Home: React.FC = () => {
         </div>
       </div>
     </div>
+    <LoginDialog
+      open={loginOpen}
+      onOpenChange={setLoginOpen}
+      onSuccess={() => {
+        setLoginOpen(false)
+        navigate("/calendar")
+      }}
+    />
+    </>
   )
 }
 
