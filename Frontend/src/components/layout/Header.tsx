@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/sheet"
 import { siteNavigation } from "@/config/navigation"
 import { cn } from "@/lib/utils"
+import LoginDialog from "@/components/auth/LoginDialog"
+import { useAuth } from "@/context/AuthContext"
 
 const headerLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -22,6 +24,9 @@ const headerLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 export const Header: React.FC = () => {
   const [open, setOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -30,17 +35,39 @@ export const Header: React.FC = () => {
         </div>
 
         <nav className="hidden items-center gap-6 md:flex">
-          {siteNavigation.map((item) => (
-            <NavLink key={item.to} to={item.to} className={headerLinkClass}>
-              {item.label}
-            </NavLink>
-          ))}
+          {siteNavigation.map((item) => {
+            const isCalendar = item.to === "/calendar"
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={headerLinkClass}
+                onClick={(e) => {
+                  if (isCalendar && !isAuthenticated) {
+                    e.preventDefault()
+                    setLoginOpen(true)
+                  }
+                }}
+              >
+                {item.label}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-2 md:hidden">
-          <MobileMenu open={open} onOpenChange={setOpen} />
+          <MobileMenu open={open} onOpenChange={setOpen} onRequireLogin={() => setLoginOpen(true)} />
         </div>
       </div>
+      <LoginDialog
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onSuccess={() => {
+          setLoginOpen(false)
+          setOpen(false)
+          navigate("/calendar")
+        }}
+      />
     </header>
   )
 }
@@ -48,9 +75,10 @@ export const Header: React.FC = () => {
 type MobileMenuProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onRequireLogin: () => void
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ open, onOpenChange }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ open, onOpenChange, onRequireLogin }) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
@@ -63,21 +91,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ open, onOpenChange }) => {
           <SheetTitle>ナビゲーション</SheetTitle>
         </SheetHeader>
         <nav className="mt-6 flex flex-col gap-2">
-          {siteNavigation.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-accent text-accent-foreground"
-                )
-              }
-              onClick={() => onOpenChange(false)}
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {siteNavigation.map((item) => {
+            const isCalendar = item.to === "/calendar"
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                    isActive && "bg-accent text-accent-foreground"
+                  )
+                }
+                onClick={(e) => {
+                  if (isCalendar) {
+                    e.preventDefault()
+                    onRequireLogin()
+                  } else {
+                    onOpenChange(false)
+                  }
+                }}
+              >
+                {item.label}
+              </NavLink>
+            )
+          })}
         </nav>
       </SheetContent>
     </Sheet>

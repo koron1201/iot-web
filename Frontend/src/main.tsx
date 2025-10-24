@@ -11,6 +11,10 @@ import { Home } from "@/routes/home"
 import { Members } from "@/routes/members"
 import { News } from "@/routes/news"
 import { Research } from "@/routes/research"
+import { Submission } from "@/routes/submission"
+import { Calendar } from "@/routes/calendar"
+import ProtectedRoute from "@/routes/ProtectedRoute"
+import { AuthProvider } from "@/context/AuthContext"
 
 const router = createBrowserRouter([
   {
@@ -23,10 +27,20 @@ const router = createBrowserRouter([
       { path: "members", element: <Members /> },
       { path: "news", element: <News /> },
       { path: "contact", element: <Contact /> },
+      { path: "submission", element: <Submission /> },
+      { path: "calendar", element: (
+        <ProtectedRoute>
+          <Calendar />
+        </ProtectedRoute>
+      ) },
     ],
   },
 ])
 
 const container = document.getElementById("root")!
-createRoot(container).render(<RouterProvider router={router} />)
+createRoot(container).render(
+  <AuthProvider>
+    <RouterProvider router={router} />
+  </AuthProvider>
+)
 

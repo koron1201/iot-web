@@ -9,6 +9,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
+    "jsx": "react-jsx",
     "skipLibCheck": true,
 
     /* Bundler mode */
