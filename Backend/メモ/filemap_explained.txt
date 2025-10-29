@@ -1,0 +1,99 @@
+iot-web/
+├─── Backend/                      # Python FastAPIで構築されたバックエンドアプリケーション
+│    ├─── .env                     # 環境変数ファイル（データベース接続情報、APIキーなどを記載）
+│    ├─── .gitignore               # Gitがバージョン管理しないファイル/フォルダを指定
+│    ├─── main.py                  # FastAPIアプリケーションのメインファイル（APIルーターの統合など）
+│    ├─── README.md                # バックエンドに関する説明書
+│    ├─── requirements.txt         # バックエンドが必要とするPythonライブラリ（依存関係）のリスト
+│    ├─── core/                    # アプリケーションの核となる設定
+│    │    └─── database.py          # SQLAlchemyを使ったデータベース接続エンジンとセッションの設定
+│    ├─── modules/                 # APIの各機能を役割ごとに分割したモジュール群
+│    │    ├─── calendar/            # カレンダー機能モジュール
+│    │    │    ├─── __init__.py     # このディレクトリをPythonパッケージとして認識させるためのファイル
+│    │    │    ├─── crud.py         # カレンダー関連のデータ操作（作成, 読み取り, 更新, 削除）ロジック
+│    │    │    ├─── models.py       # カレンダーのデータベーステーブル定義 (SQLAlchemy)
+│    │    │    ├─── router.py       # カレンダーAPIのエンドポイント（/calendar など）の定義
+│    │    │    └─── schemas.py      # カレンダーAPIで送受信するデータの形式定義 (Pydantic)
+│    │    ├─── chatbot/             # チャットボット機能モジュール
+│    │    │    ├─── __init__.py     # Pythonパッケージ認識用のファイル
+│    │    │    ├─── router.py       # チャットボットAPIのエンドポイント定義
+│    │    │    └─── schemas.py      # チャットボットAPIのデータ形式定義
+│    │    ├─── contact/             # 問い合わせ機能モジュール
+│    │    │    ├─── __init__.py     # Pythonパッケージ認識用のファイル
+│    │    │    ├─── crud.py         # 問い合わせデータのデータ操作ロジック
+│    │    │    ├─── models.py       # 問い合わせのデータベーステーブル定義
+│    │    │    ├─── router.py       # 問い合わせAPIのエンドポイント定義
+│    │    │    └─── schemas.py      # 問い合わせAPIのデータ形式定義
+│    │    ├─── deliverables/        # 成果物管理機能モジュール
+│    │    │    ├─── __init__.py     # Pythonパッケージ認識用のファイル
+│    │    │    ├─── crud.py         # 成果物データのデータ操作ロジック
+│    │    │    ├─── models.py       # 成果物のデータベーステーブル定義
+│    │    │    ├─── router.py       # 成果物APIのエンドポイント定義
+│    │    │    └─── schemas.py      # 成果物APIのデータ形式定義
+│    │    ├─── news/                # ニュース機能モジュール
+│    │    │    ├─── __init__.py     # Pythonパッケージ認識用のファイル
+│    │    │    ├─── crud.py         # ニュースデータのデータ操作ロジック
+│    │    │    ├─── models.py       # ニュースのデータベーステーブル定義
+│    │    │    ├─── router.py       # ニュースAPIのエンドポイント定義
+│    │    │    └─── schemas.py      # ニュースAPIのデータ形式定義
+│    │    └─── research/            # 研究内容機能モジュール
+│    │         ├─── __init__.py     # Pythonパッケージ認識用のファイル
+│    │         ├─── crud.py         # 研究内容データのデータ操作ロジック
+│    │         ├─── models.py       # 研究内容のデータベーステーブル定義
+│    │         ├─── router.py       # 研究内容APIのエンドポイント定義
+│    │         └─── schemas.py      # 研究内容APIのデータ形式定義
+│    └─── メモ/                    # 個人的なメモ用ディレクトリ
+│         └─── filemap.txt        # おそらく以前に作成されたファイルマップのコピー
+├─── docs/                         # プロジェクトの設計や仕様に関するドキュメント群
+│    ├─── architecture.md          # システム全体のアーキテクチャ設計書
+│    ├─── data-structure.md        # 使用するデータ構造の定義書
+│    ├─── directory-structure.md   # ディレクトリ構造の説明書
+│    ├─── implementation-task.md   # 実装すべきタスクのリスト
+│    ├─── README.md                # docsディレクトリ自体の説明書
+│    ├─── requirement.md           # プロジェクトの機能要件や非機能要件の定義書
+│    └─── tech-stack.md            # 使用している技術（ライブラリ、フレームワーク）の一覧
+├─── filemap_explained.txt         # このファイル自身
+├─── Frontend/                     # ReactとTypeScriptで構築されたフロントエンドアプリケーション
+│    ├─── .gitignore               # Gitがバージョン管理しないファイル/フォルダを指定
+│    ├─── components.json          # UIライブラリ(shadcn/ui)のコンポーネント設定ファイル
+│    ├─── index.html               # ブラウザで表示されるWebページの基本となるHTMLファイル
+│    ├─── package-lock.json        # インストールされたライブラリの正確なバージョンを記録するファイル
+│    ├─── package.json             # プロジェクト情報と必要なライブラリ(npm)のリスト
+│    ├─── postcss.config.js        # CSSの変換ツール(PostCSS)の設定ファイル
+│    ├─── tailwind.config.js       # CSSフレームワーク(Tailwind CSS)のデザイン設定ファイル
+│    ├─── tsconfig.json            # TypeScriptのコンパイラ設定ファイル
+│    ├─── vite.config.ts           # ビルドツール(Vite)の設定ファイル
+│    ├─── public/                  # ビルド時にそのままコピーされる静的ファイル（画像など）を配置するディレクトリ
+│    │    └─── vite.svg             # Viteのロゴ画像ファイル
+│    └─── src/                     # フロントエンドのソースコードが格納されるメインディレクトリ
+│         ├─── components/          # 再利用可能なUI部品（コンポーネント）群
+│         │    ├─── layout/          # ヘッダーやフッターなど、ページの骨格となるレイアウト用コンポーネント
+│         │    │    ├─── Footer.tsx   # 全ページ共通のフッターコンポーネント
+│         │    │    └─── Header.tsx   # 全ページ共通のヘッダーコンポーネント
+│         │    └─── ui/              # shadcn/uiによって提供された基本的なUIコンポーネント群
+│         │         ├─── button.tsx     # ボタンコンポーネント
+│         │         ├─── card.tsx       # カード形式のコンテナコンポーネント
+│         │         ├─── dialog.tsx     # ダイアログ（ポップアップ）コンポーネント
+│         │         ├─── dropdown-menu.tsx # ドロップダウンメニューコンポーネント
+│         │         ├─── input.tsx      # 入力フィールドコンポーネント
+│         │         ├─── separator.tsx  # 区切り線コンポーネント
+│         │         ├─── sheet.tsx      # 画面の横からスライドインするパネルコンポーネント
+│         │         └─── textarea.tsx   # 複数行のテキスト入力エリアコンポーネント
+│         ├─── config/              # アプリケーション全体の設定ファイルを格納
+│         │    └─── navigation.ts    # サイトのナビゲーションメニューの構造を定義
+│         ├─── lib/                 # ライブラリや補助的な便利関数を格納
+│         │    └─── utils.ts         # Tailwind CSSのクラス名を結合・整理するための便利関数
+│         ├─── routes/              # 各ページ（URL）に対応するコンポーネント群
+│         │    ├─── about.tsx        # /about ページ
+│         │    ├─── contact.tsx      # /contact ページ
+│         │    ├─── home.tsx         # / (ルート)ページ
+│         │    ├─── members.tsx      # /members ページ
+│         │    ├─── news.tsx         # /news ページ
+│         │    ├─── research.tsx     # /research ページ
+│         │    └─── RootLayout.tsx   # 全ページで共通して使われる最上位のレイアウトコンポーネント
+│         ├─── counter.ts           # (サンプル)カウンター機能のロジックファイル
+│         ├─── main.ts              # (おそらく未使用) TypeScriptのシンプルなエントリーポイント
+│         ├─── main.tsx             # Reactアプリケーションを起動し、HTMLに描画するためのエントリーポイント
+│         ├─── style.css            # グローバルに適用されるCSSスタイルシート
+│         └─── typescript.svg       # (サンプル)TypeScriptのロゴ画像
+└─── README.md                     # プロジェクト全体の目的や使い方を記述する最も重要なファイル
