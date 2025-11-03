@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-router = APIRouter()
-
-@router.get("/deliverables")
-async def read_deliverables():
-    return {"message": "Deliverables router is working!"}
+router = APIRouter(
+    prefix="/deliverables",
+    tags=["deliverables"],
+    responses={404: {"description": "Not found"}},
+)
