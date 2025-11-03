@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-router = APIRouter()
-
-@router.get("/chatbot")
-async def read_chatbot():
-    return {"message": "Chatbot router is working!"}
+router = APIRouter(
+    prefix="/chatbot",
+    tags=["chatbot"],
+    responses={404: {"description": "Not found"}},
+)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-router = APIRouter()
-
-@router.get("/news")
-async def read_news():
-    return {"message": "News router is working!"}
+router = APIRouter(
+    prefix="/news",
+    tags=["news"],
+    responses={404: {"description": "Not found"}},
+)
