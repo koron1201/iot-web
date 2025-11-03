@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-router = APIRouter()
-
-@router.get("/calendar")
-async def read_calendar():
-    return {"message": "Calendar router is working!"}
+router = APIRouter(
+    prefix="/calendar",
+    tags=["calendar"],
+    responses={404: {"description": "Not found"}},
+)
