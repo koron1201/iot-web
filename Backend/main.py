@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from core.database import engine, Base
 from modules.research.router import router as research_router
 from modules.news.router import router as news_router
 from modules.calendar.router import router as calendar_router
@@ -7,6 +10,18 @@ from modules.submission.router import router as submission_router
 from modules.chatbot.router import router as chatbot_router
 
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(research_router)
 app.include_router(news_router)
