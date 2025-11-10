@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, Suspense } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +7,13 @@ import { siteNavigation } from "@/config/navigation"
 import { cn } from "@/lib/utils"
 import LoginDialog from "@/components/auth/LoginDialog"
 import { useAuth } from "@/context/AuthContext"
+import { Canvas } from "@react-three/fiber"
+import { OrbitControls, useGLTF } from "@react-three/drei"
+
+function Model() {
+  const { scene } = useGLTF("/model.glb")
+  return <primitive object={scene} scale={1.5} />
+}
 
 const RESEARCH_FIELDS = [
   {
@@ -62,10 +69,7 @@ export const Home: React.FC = () => {
   }, [clearTimers])
 
   const handleFieldsReveal = useCallback(() => {
-    if (fieldsStarted) {
-      return
-    }
-
+    if (fieldsStarted) return
     setFieldsStarted(true)
     const timeouts: ReturnType<typeof setTimeout>[] = []
     RESEARCH_FIELDS.forEach((_item, index) => {
@@ -76,18 +80,13 @@ export const Home: React.FC = () => {
           return next
         })
       }, index * 2000)
-
       timeouts.push(timeoutId)
     })
-
     fieldsTimeoutRef.current = timeouts
   }, [fieldsStarted])
 
   const handleContentReveal = useCallback(() => {
-    if (contentStarted) {
-      return
-    }
-
+    if (contentStarted) return
     setContentStarted(true)
     const timeouts: ReturnType<typeof setTimeout>[] = []
     siteNavigation.forEach((_item, index) => {
@@ -98,158 +97,160 @@ export const Home: React.FC = () => {
           return next
         })
       }, index * 2000)
-
       timeouts.push(timeoutId)
     })
-
     contentTimeoutRef.current = timeouts
   }, [contentStarted])
 
   return (
     <>
-    <div className="w-full space-y-16 py-12">
-      <section className="px-8">
-        <div className="flex flex-col-reverse gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-4 md:max-w-3xl">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Smart ICT Solutions Laboratory
-            </h1>
-            <p className="max-w-3xl text-lg text-muted-foreground">
-              東京電機大学のスマートICTソリューション研究室では、IoT・組込みソフトウェア・人工知能・デジタルツインなどの最先端技術を活用し、社会課題に挑む研究を行っています。
-            </p>
+      <div className="w-full space-y-16 py-12">
+        <section className="px-8">
+          <div className="flex flex-col-reverse gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-4 md:max-w-3xl">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                Smart ICT Solutions Laboratory
+              </h1>
+              <p className="max-w-3xl text-lg text-muted-foreground">
+                東京電機大学のスマートICTソリューション研究室では、IoT・組込みソフトウェア・人工知能・デジタルツインなどの最先端技術を活用し、社会課題に挑む研究を行っています。
+              </p>
+            </div>
+            <nav className="w-fit self-start rounded-full border border-gray-200 bg-white px-8 py-4 shadow-lg">
+              <div className="flex items-center gap-4">
+                {siteNavigation.map((item) => {
+                  const isCalendar = item.to === "/calendar"
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={navLinkClass}
+                      onClick={(e) => {
+                        if (isCalendar && !isAuthenticated) {
+                          e.preventDefault()
+                          setLoginOpen(true)
+                        }
+                      }}
+                    >
+                      {item.label}
+                      <div
+                        className={cn(
+                          "absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 transition-opacity duration-200",
+                          item.to === "/" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}
+                      ></div>
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </nav>
           </div>
-          <nav className="w-fit self-start rounded-full border border-gray-200 bg-white px-8 py-4 shadow-lg">
-            <div className="flex items-center gap-4">
-              {siteNavigation.map((item) => {
-                const isCalendar = item.to === "/calendar"
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={navLinkClass}
-                    onClick={(e) => {
-                      if (isCalendar && !isAuthenticated) {
-                        e.preventDefault()
-                        setLoginOpen(true)
-                      }
-                    }}
-                  >
-                    {item.label}
-                    <div
+        </section>
+
+        <div className="grid gap-8 md:grid-cols-2">
+          {/* 左カラム */}
+          <div className="space-y-8 px-8">
+            <StatsSection members={28} research={12} papers={45} />
+
+            {/* 研究分野 */}
+            <section className="space-y-6">
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleFieldsReveal}
+                  disabled={fieldsStarted}
+                  className="w-fit rounded-sm text-left text-2xl font-semibold tracking-tight disabled:cursor-not-allowed disabled:text-muted-foreground"
+                >
+                  研究分野
+                </button>
+                <p className="max-w-2xl text-muted-foreground">
+                  我々の研究室では、情報ネットワークからデジタルツインまで幅広いテーマに取り組んでいます。
+                </p>
+              </div>
+              {fieldsStarted && (
+                <div className="grid gap-4">
+                  {RESEARCH_FIELDS.map((field, index) => (
+                    <Card
+                      key={field.title}
                       className={cn(
-                        "absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 transition-opacity duration-200",
-                        item.to === "/" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        "transition-opacity duration-700",
+                        fieldsVisible[index] ? "opacity-100" : "opacity-0"
                       )}
-                    ></div>
-                  </NavLink>
-                )
-              })}
-            </div>
-          </nav>
-        </div>
-      </section>
+                    >
+                      <CardHeader>
+                        <CardTitle>{field.title}</CardTitle>
+                        <CardDescription>{field.description}</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* 左カラム */}
-        <div className="space-y-8 px-8">
-          {/* 統計情報（上部） */}
-          <StatsSection members={28} research={12} papers={45} />
-
-          {/* 研究分野 */}
-          <section className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleFieldsReveal}
-                disabled={fieldsStarted}
-                className="w-fit rounded-sm text-left text-2xl font-semibold tracking-tight disabled:cursor-not-allowed disabled:text-muted-foreground"
-              >
-                研究分野
-              </button>
-              <p className="max-w-2xl text-muted-foreground">
-                我々の研究室では、情報ネットワークからデジタルツインまで幅広いテーマに取り組んでいます。
-              </p>
-            </div>
-            {fieldsStarted && (
-              <div className="grid gap-4">
-                {RESEARCH_FIELDS.map((field, index) => (
-                  <Card
-                    key={field.title}
-                    className={cn(
-                      "transition-opacity duration-700",
-                      fieldsVisible[index] ? "opacity-100" : "opacity-0"
-                    )}
-                  >
-                    <CardHeader>
-                      <CardTitle>{field.title}</CardTitle>
-                      <CardDescription>{field.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                ))}
+            {/* 主要コンテンツ */}
+            <section className="space-y-6">
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleContentReveal}
+                  disabled={contentStarted}
+                  className="w-fit rounded-sm text-left text-2xl font-semibold tracking-tight disabled:cursor-not-allowed disabled:text-muted-foreground"
+                >
+                  主要コンテンツ
+                </button>
+                <p className="max-w-2xl text-muted-foreground">
+                  研究室の活動や実績を紹介するコンテンツをご覧ください。
+                </p>
               </div>
-            )}
-          </section>
+              {contentStarted && (
+                <div className="grid gap-4">
+                  {siteNavigation.map((item, index) => (
+                    <Card
+                      key={item.to}
+                      className={cn(
+                        "transition-opacity duration-700",
+                        contentVisible[index] ? "opacity-100" : "opacity-0"
+                      )}
+                    >
+                      <CardHeader>
+                        <CardTitle>{item.label}</CardTitle>
+                        <CardDescription>
+                          研究室の{item.label}に関する詳細情報をご確認いただけます。
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">準備中</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
 
-          {/* 主要コンテンツ */}
-          <section className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleContentReveal}
-                disabled={contentStarted}
-                className="w-fit rounded-sm text-left text-2xl font-semibold tracking-tight disabled:cursor-not-allowed disabled:text-muted-foreground"
-              >
-                主要コンテンツ
-              </button>
-              <p className="max-w-2xl text-muted-foreground">
-                研究室の活動や実績を紹介するコンテンツをご覧ください。
-              </p>
-            </div>
-            {contentStarted && (
-              <div className="grid gap-4">
-                {siteNavigation.map((item, index) => (
-                  <Card
-                    key={item.to}
-                    className={cn(
-                      "transition-opacity duration-700",
-                      contentVisible[index] ? "opacity-100" : "opacity-0"
-                    )}
-                  >
-                    <CardHeader>
-                      <CardTitle>{item.label}</CardTitle>
-                      <CardDescription>
-                        研究室の{item.label}に関する詳細情報をご確認いただけます。
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">準備中</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* 右カラム */}
-        <div className="flex items-center justify-center bg-muted rounded-lg min-h-[600px] mx-8">
-          <div className="text-center">
-            <p className="text-2xl font-semibold">Coming Soon</p>
+          {/* 右カラム（Blenderモデル表示） */}
+          <div className="bg-muted rounded-lg min-h-[600px] mx-8 flex">
+            <Suspense fallback={null}>
+              <Canvas className="w-full h-full rounded-lg" camera={{ position: [0, 1, 3], fov: 50 }}>
+                <ambientLight intensity={1.2} />
+                <directionalLight position={[5, 5, 5]} intensity={1.5} />
+                <OrbitControls enableZoom={true} />
+                <Model />
+              </Canvas>
+            </Suspense>
           </div>
         </div>
       </div>
-    </div>
-    <LoginDialog
-      open={loginOpen}
-      onOpenChange={setLoginOpen}
-      onSuccess={() => {
-        setLoginOpen(false)
-        navigate("/calendar")
-      }}
-    />
+
+      <LoginDialog
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onSuccess={() => {
+          setLoginOpen(false)
+          navigate("/calendar")
+        }}
+      />
     </>
   )
 }
 
 export default Home
-
