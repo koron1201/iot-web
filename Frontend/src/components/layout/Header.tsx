@@ -82,7 +82,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ open, onOpenChange, onRequireLo
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="メニューを開くw">
+        <Button variant="ghost" size="icon" aria-label="メニューを開く">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
