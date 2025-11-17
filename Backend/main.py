@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import engine, Base
+from dotenv import load_dotenv
+
+load_dotenv()
 from modules.research.router import router as research_router
 from modules.news.router import router as news_router
 from modules.calendar.router import router as calendar_router
