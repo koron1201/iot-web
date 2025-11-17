@@ -1,3 +1,5 @@
+import { PageQuickNav } from "@/components/PageQuickNav"
+
 interface ResearchProps{
   name: string
   title: string
@@ -22,7 +24,9 @@ const ResearchList: ResearchProps[] = [
 
 export const Research: React.FC = () => {
   return (
-    <div className="container py-12">
+    <>
+      <PageQuickNav />
+      <div className="container py-12">
       <h1 className="text-2xl font-semibold mb-6">研究内容</h1>
 
     <div className="grid gap-6 md:grid-cols-2">
@@ -34,7 +38,8 @@ export const Research: React.FC = () => {
         </div>
       ))}
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

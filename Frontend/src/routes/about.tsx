@@ -1,8 +1,12 @@
 import { NavLink } from "react-router-dom"
 
+import { PageQuickNav } from "@/components/PageQuickNav"
+
 export const About: React.FC = () => {
   return (
-    <div className="container py-12">
+    <>
+      <PageQuickNav />
+      <div className="container py-12">
       {/* 見出し */}
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">研究室概要</h1>
       <h2 className="text-2xl font-semibold mt-8">スマートICTソリューション研究室（設立：2023年）</h2>
@@ -95,7 +99,8 @@ export const About: React.FC = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   )
 }
 
