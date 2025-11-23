@@ -1,3 +1,4 @@
+import { PageQuickNav } from "@/components/PageQuickNav"
 import React from 'react'
 
 //ニュースデータ
@@ -20,7 +21,7 @@ const dummyNews: NewsItem[] = [
   {
     id: 2,
     date: '2025.11.07',
-    title: 'test',
+    title: 'tes',
     category: 'イベント',
 
   },
