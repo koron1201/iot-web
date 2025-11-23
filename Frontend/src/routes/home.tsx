@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import * as THREE from "three"
+import {GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import LoginDialog from "@/components/auth/LoginDialog"
 import { useAuth } from "@/context/AuthContext"
@@ -141,27 +142,59 @@ export const Home = () => {
     const stars = new THREE.Points(starsGeometry, starsMaterial)
     scene.add(stars)
 
-    // main planet
-    const mainPlanet = new THREE.Mesh(
-      new THREE.SphereGeometry(3, 64, 64),
-      new THREE.MeshPhongMaterial({
-        color: 0x4a90e2,
-        emissive: 0x112244,
-        shininess: 100,
-      })
-    )
-    scene.add(mainPlanet)
+    const loader = new GLTFLoader()
+    let planetModel: THREE.Group | null = null
 
-    const gridSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(3.05, 32, 32),
-      new THREE.MeshBasicMaterial({
-        color: 0x00ffff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.25,
-      })
+    loader.load(
+      '/face.glb', 
+      (gltf:GLTF) => {
+        console.log('GLB loaded:', gltf);
+        planetModel = gltf.scene
+        planetModel.scale.set(0.7, 0.7, 0.7)
+        planetModel.position.set(0, 0, 0)
+        planetModel.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+          }
+        })
+       scene.add(planetModel)
+      },
+      (xhr) => {
+        console.log(`Model ${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`)
+      },
+      (error) => {
+       console.error('An error happened while loading GLB:', error)
+      }
     )
-    scene.add(gridSphere)
+
+    // --- ライト設定 ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7) // 全体を柔らかく照らす
+    scene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8) // 主光源
+    directionalLight.position.set(5, 10, 7)
+    scene.add(directionalLight)
+
+    const fillLight1 = new THREE.PointLight(0xffffff, 0.4) // 補助光1
+    fillLight1.position.set(-5, 5, 5)
+    scene.add(fillLight1)
+
+    const fillLight2 = new THREE.PointLight(0xffffff, 0.3) // 補助光2
+    fillLight2.position.set(0, -5, 5)
+    scene.add(fillLight2)
+
+
+    //const gridSphere = new THREE.Mesh(
+      //new THREE.SphereGeometry(3.05, 32, 32),
+      //new THREE.MeshBasicMaterial({
+        //color: 0x00ffff,
+        //wireframe: true,
+        //transparent: true,
+        //opacity: 0.25,
+      //})
+    //)
+    //scene.add(gridSphere)
 
     const glow = new THREE.Mesh(
       new THREE.SphereGeometry(3.3, 32, 32),
@@ -172,7 +205,7 @@ export const Home = () => {
         side: THREE.BackSide,
       })
     )
-    scene.add(glow)
+    //scene.add(glow)
 
     const planets: Array<{
       mesh: THREE.Mesh
@@ -297,8 +330,11 @@ export const Home = () => {
       const animationId = requestAnimationFrame(animate)
       time += 0.01
 
-      mainPlanet.rotation.y += 0.002
-      gridSphere.rotation.y += 0.003
+      if (planetModel) {
+         planetModel.rotation.y += 0.002
+      }
+
+      //gridSphere.rotation.y += 0.003
       glow.rotation.y -= 0.001
 
       planets.forEach((planet) => {
