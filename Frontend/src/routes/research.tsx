@@ -1,10 +1,21 @@
 import { PageQuickNav } from "@/components/PageQuickNav"
+import {motion } from "framer-motion"
 
 interface ResearchProps{
   name: string
   title: string
   description: string
 }
+
+const itemVariants = {
+  hidden:{opacity:0, y:50},
+  show: {opacity:1, y:0, transition: {duration:0.9}},
+};
+
+const containerVariants = {
+  hidden:{},
+  show:{transition:{staggerChildren: 0.05}},
+  };
 
 const ResearchList: ResearchProps[] = [
   { name: "阿部瑞樹",     title: "仮想空間における楽器演奏の協調方式の提案と実装", description: "高価格な楽器を使わずに、より手軽なVR上でのアバター表現などを活用した演奏可能な演奏支援システムの開発を行う" },
@@ -24,24 +35,40 @@ const ResearchList: ResearchProps[] = [
 
 export const Research: React.FC = () => {
   return (
-    <>
-      <PageQuickNav />
-      <div className="container py-12">
+      <motion.div
+        className="relative min-h-screen"
+        initial={{y:"100%",opacity:0}}
+        animate={{y:"0%",opacity:1}}
+        exit={{y:"100%", opacity:0}}
+        transition={{duration:0.6,ease:"easeOut"}}
+      >
+      
+      <PageQuickNav/>
+      
+      {/*背景*/}
+      <div className="fixed inset-0 z-0 bg-white-900" />
+
+      {/*コンテンツ*/}
+      <div className="relative z-10 container py-12">
       <h1 className="text-2xl font-semibold mb-6">研究内容</h1>
-
-    <div className="grid gap-6 md:grid-cols-2">
-      {ResearchList.map((item, index) => (
-        <div key={index} className="rounded-2xl border p-6 shadow-sm hover:shadow-md transition">
-          <h2 className="text-xl font-bold">{item.title}</h2>
-          <p className="text-muted-foreground mt-1">研究者 : {item.name}</p>
-          <p className= "mt-3">{item.description}</p>
+      <div className="grid gap-6 md:grid-cols-2">
+          {ResearchList.map((item, index) => (
+            <motion.div
+              key={index} 
+              className="rounded-2xl border p-6 shadow-sm hover:shadow-md transition"
+              initial={{ opacity:0, y:50 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ duration: 1.1, delay: index * 0.05 }}
+            >
+              <h2 className="text-xl font-bold">{item.title}</h2>
+              <p className="text-muted-foreground mt-1">研究者 : {item.name}</p>
+              <p className= "mt-3">{item.description}</p>
+            </motion.div>
+          ))}
         </div>
-      ))}
-      </div>
-      </div>
-    </>
-  )
-}
+    </div>
+  </motion.div>
+  );
+};
 
-export default Research
-
+export default Research;
