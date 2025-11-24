@@ -1,5 +1,6 @@
-import { PageQuickNav } from "@/components/PageQuickNav"
 import React from 'react'
+import { PageQuickNav } from "@/components/PageQuickNav"
+
 
 //ニュースデータ
 interface NewsItem {
@@ -38,6 +39,7 @@ export const News: React.FC = () => {
   return (
     <div className="container py-12 px-4 md:px-6 lg:px-8">
       {/* ページタイトル */}
+      <PageQuickNav/>
       <h1 className="text-4xl font-extrabold text-gray-900 border-b-4 border-indigo-600 pb-2 mb-10 inline-block">
         ニュース
       </h1>
