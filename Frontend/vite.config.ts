@@ -18,7 +18,16 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
-  },
+    host: true,
+    port: 5173,
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+    },
+    watch:{
+      usePolling:true,
+    },
+  }
   /////
 })
 
