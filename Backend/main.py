@@ -25,8 +25,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#app.mount("/static", StaticFiles(directory="static"), name="static")
+#app.mount("/static", StaticFiles(directory="static/submisiions"), name="static_submisiions_images")
 app.mount("/static/metaberse", CompressedStaticFiles(directory="static/metaberse"), name="static_metaberse")  
+app.mount("/static/submissions", CompressedStaticFiles(directory="static/submissions"), name="static_submissions")
 
 app.include_router(research_router)
 app.include_router(news_router)
