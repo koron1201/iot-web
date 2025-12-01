@@ -49,6 +49,12 @@ type PlanetConfig = {
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+const MAX_PIXEL_RATIO = 1.25
+const TARGET_FPS = 45
+const TIME_SCALE = 0.6
+const LABEL_HEIGHT_OFFSET = 2.4
+const LABEL_FLOAT_AMPLITUDE = 0.15
+const STAR_COUNT = 1500
 
 const createLabelSprite = (text: string) => {
   const baseWidth = 420
@@ -120,25 +126,36 @@ export const Home = () => {
       return
     }
 
+    const mountElement = mountRef.current
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000)
     camera.position.z = 15
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    mountRef.current.appendChild(renderer.domElement)
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO)
+    const initialWidth = mountElement.clientWidth || window.innerWidth
+    const initialHeight = mountElement.clientHeight || window.innerHeight
+    renderer.setPixelRatio(pixelRatio)
+    renderer.setSize(initialWidth, initialHeight)
+    mountElement.appendChild(renderer.domElement)
 
     // star field
     const starsGeometry = new THREE.BufferGeometry()
     const starVertices: number[] = []
-    for (let i = 0; i < 6000; i++) {
+    for (let i = 0; i < STAR_COUNT; i++) {
       starVertices.push((Math.random() - 0.5) * 2000)
       starVertices.push((Math.random() - 0.5) * 2000)
       starVertices.push((Math.random() - 0.5) * 2000)
     }
     starsGeometry.setAttribute("position", new THREE.Float32BufferAttribute(starVertices, 3))
-    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true })
+    const starsMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.4,
+      transparent: true,
+      depthWrite: false,
+      sizeAttenuation: false,
+      opacity: 0.85,
+    })
     const stars = new THREE.Points(starsGeometry, starsMaterial)
     scene.add(stars)
 
@@ -154,8 +171,8 @@ export const Home = () => {
         planetModel.position.set(0, 0, 0)
         planetModel.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
+            child.castShadow = false
+            child.receiveShadow = false
           }
         })
        scene.add(planetModel)
@@ -217,6 +234,7 @@ export const Home = () => {
       offset: number
       meta: PlanetMeta
     }> = []
+    const planetMeshes: THREE.Mesh[] = []
     planetConfigs.forEach((data, index) => {
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.85, 32, 32),
@@ -250,6 +268,7 @@ export const Home = () => {
         offset: index * (Math.PI / 2.5),
         meta: data.meta,
       })
+      planetMeshes.push(mesh)
       scene.add(mesh)
       scene.add(glowMesh)
       scene.add(labelSprite)
@@ -265,6 +284,11 @@ export const Home = () => {
 
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
+    let pointerDirty = false
+    const tempVector = new THREE.Vector3()
+    const minFrameInterval = 1000 / TARGET_FPS
+    let lastFrameTime = performance.now()
+    let isTabHidden = document.hidden
 
     const handleHoverChange = (label: string | null, meta: PlanetMeta | null) => {
       if (hoveredPlanetRef.current === label) {
@@ -278,14 +302,7 @@ export const Home = () => {
     const handleMouseMove = (event: MouseEvent) => {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-      raycaster.setFromCamera(mouse, camera)
-      const intersects = raycaster.intersectObjects(planets.map((p) => p.mesh))
-      if (intersects.length > 0) {
-        const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
-        handleHoverChange(label, meta)
-      } else {
-        handleHoverChange(null, null)
-      }
+      pointerDirty = true
     }
 
     const handleClick = () => {
@@ -315,20 +332,42 @@ export const Home = () => {
     }
 
     const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
+      const nextWidth = mountElement.clientWidth || window.innerWidth
+      const nextHeight = mountElement.clientHeight || window.innerHeight
+      camera.aspect = nextWidth / nextHeight
       camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setSize(nextWidth, nextHeight)
+    }
+
+    const handleVisibilityChange = () => {
+      isTabHidden = document.hidden
+      lastFrameTime = performance.now()
     }
 
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("click", handleClick)
     window.addEventListener("wheel", handleWheel)
     window.addEventListener("resize", handleResize)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     let time = 0
-    const animate = () => {
-      const animationId = requestAnimationFrame(animate)
-      time += 0.01
+    let animationId = 0
+    const animate = (now: number) => {
+      animationId = requestAnimationFrame(animate)
+
+      if (isTabHidden) {
+        lastFrameTime = now
+        return
+      }
+
+      const deltaMs = now - lastFrameTime
+      if (deltaMs < minFrameInterval) {
+        return
+      }
+
+      lastFrameTime = now
+      const delta = deltaMs / 1000
+      time += delta * TIME_SCALE
 
       if (planetModel) {
          planetModel.rotation.y += 0.002
@@ -337,14 +376,28 @@ export const Home = () => {
       //gridSphere.rotation.y += 0.003
       glow.rotation.y -= 0.001
 
+      if (pointerDirty) {
+        raycaster.setFromCamera(mouse, camera)
+        const intersects = raycaster.intersectObjects(planetMeshes, false)
+        if (intersects.length > 0) {
+          const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
+          handleHoverChange(label, meta)
+        } else {
+          handleHoverChange(null, null)
+        }
+        pointerDirty = false
+      }
+
       planets.forEach((planet) => {
         const radius = 8
         const angle = time * 0.25 + planet.offset
-        planet.mesh.position.set(Math.cos(angle) * radius, Math.sin(time * 0.6 + planet.offset) * 2, Math.sin(angle) * radius)
+        const cosAngle = Math.cos(angle)
+        const sinAngle = Math.sin(angle)
+        planet.mesh.position.set(cosAngle * radius, Math.sin(time * 0.6 + planet.offset) * 2, sinAngle * radius)
         planet.glow.position.copy(planet.mesh.position)
-        const labelPosition = planet.mesh.position.clone()
-        labelPosition.y += 2.4 + Math.sin(time * 2 + planet.offset) * 0.15
-        planet.labelSprite.position.copy(labelPosition)
+        tempVector.copy(planet.mesh.position)
+        tempVector.y += LABEL_HEIGHT_OFFSET + Math.sin(time * 2 + planet.offset) * LABEL_FLOAT_AMPLITUDE
+        planet.labelSprite.position.copy(tempVector)
         const isHovered = hoveredPlanetRef.current === planet.label
         planet.glowMaterial.opacity = isHovered ? 0.6 : 0.3
         planet.mesh.scale.setScalar(isHovered ? 1.15 : 1)
@@ -371,13 +424,14 @@ export const Home = () => {
       return animationId
     }
 
-    const animationId = animate()
+    animationId = requestAnimationFrame(animate)
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("click", handleClick)
       window.removeEventListener("wheel", handleWheel)
       window.removeEventListener("resize", handleResize)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       document.body.style.cursor = "default"
       cancelAnimationFrame(animationId)
       mountRef.current?.removeChild(renderer.domElement)
