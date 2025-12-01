@@ -3,7 +3,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import engine, Base
 from dotenv import load_dotenv
-
+# webglを配信するためのStaticFilesクラスをmain.pyでインポート
+from core.staticfiles import CompressedStaticFiles
 load_dotenv()
 from modules.research.router import router as research_router
 from modules.news.router import router as news_router
@@ -24,7 +25,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+#app.mount("/static", StaticFiles(directory="static/submisiions"), name="static_submisiions_images")
+app.mount("/static/metaberse", CompressedStaticFiles(directory="static/metaberse"), name="static_metaberse")  
+app.mount("/static/submissions", CompressedStaticFiles(directory="static/submissions"), name="static_submissions")
 
 app.include_router(research_router)
 app.include_router(news_router)
