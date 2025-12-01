@@ -94,9 +94,9 @@ export const Research: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.1, delay: index * 0.05 }}
             >
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>◆ {item.title}</h2>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: "700" }}>◆ {item.title}</h2>
               <p style={{ marginTop: "0.5rem", color: "#aaa" }}>研究者: {item.name}</p>
-              <h1 className="mt-6 font-bold tracking-tight sm:text-1rem text-cyan-100/80">{item.description}</h1>
+              <h1 className="mt-3 font-bold tracking-tight sm:text-1rem text-cyan-100/80">{item.description}</h1>
             </motion.div>
           ))}
         </div>
