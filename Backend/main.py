@@ -5,7 +5,6 @@ from core.database import engine, Base
 from dotenv import load_dotenv
 # webglを配信するためのStaticFilesクラスをmain.pyでインポート
 from core.staticfiles import CompressedStaticFiles
-load_dotenv()
 from modules.research.router import router as research_router
 from modules.news.router import router as news_router
 from modules.calendar.router import router as calendar_router
@@ -14,6 +13,8 @@ from modules.submission.router import router as submission_router
 from modules.chatbot.router import router as chatbot_router
 
 app = FastAPI()
+
+load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 
