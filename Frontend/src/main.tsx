@@ -15,6 +15,7 @@ import { Submission } from "@/routes/submission"
 import { Calendar } from "@/routes/calendar"
 import ProtectedRoute from "@/routes/ProtectedRoute"
 import { AuthProvider } from "@/context/AuthContext"
+import { Login } from "@/routes/Login"   // カレンダーぺージのログインページへのルート(23rd119)
 
 const router = createBrowserRouter([
   {
@@ -28,11 +29,15 @@ const router = createBrowserRouter([
       { path: "news", element: <News /> },
       { path: "contact", element: <Contact /> },
       { path: "submission", element: <Submission /> },
+      { path: "calendar", element: <Calendar />},
+      /* 一時的にカレンダーぺージへのログイン機能の停止して、上行に置き換え(23rd119)
       { path: "calendar", element: (
         <ProtectedRoute>
           <Calendar />
         </ProtectedRoute>
       ) },
+       */
+       { path: "login", element: <Login /> }, /*カレンダーぺージのログインフォームへのルート(23rd119)*/
     ],
   },
 ])
