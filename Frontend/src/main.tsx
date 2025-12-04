@@ -30,16 +30,25 @@ const router = createBrowserRouter([
       { path: "contact", element: <Contact /> },
       { path: "submission", element: <Submission /> },
       { path: "calendar", element: <Calendar />},
-      /* 一時的にカレンダーぺージへのログイン機能の停止して、上行に置き換え(23rd119)
-      { path: "calendar", element: (
+      /* 一時的にカレンダーぺージへの制限を解除して、上行に置き換え(23rd119)_カレンダーぺージからの置き換え
+      path: "calendar", element: (
         <ProtectedRoute>
           <Calendar />
         </ProtectedRoute>
-      ) },
+      },
        */
-       { path: "login", element: <Login /> }, /*カレンダーぺージのログインフォームへのルート(23rd119)*/
     ],
   },
+  //以下、カレンダーぺージからの追加(23rd119)
+  {
+    path: "/login", // 2. 【追加】 /login のルート
+    element: <Login />,
+  },
+  // (もし登録ページも追加するならここ)
+  // {
+  //   path: "/register",
+  //   element: <Register />,
+  // }
 ])
 
 const container = document.getElementById("root")!

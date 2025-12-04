@@ -11,6 +11,9 @@ from modules.calendar.router import router as calendar_router
 from modules.contact.router import router as contact_router
 from modules.submission.router import router as submission_router
 from modules.chatbot.router import router as chatbot_router
+# カレンダーぺージからの追加
+from modules.auth.router import router as auth_router # 1. 【追加】 auth ルーター
+from modules.auth import models as auth_models # 2. 【追加】 auth モデル
 
 app = FastAPI()
 
@@ -36,6 +39,8 @@ app.include_router(calendar_router)
 app.include_router(contact_router)
 app.include_router(submission_router)
 app.include_router(chatbot_router)
+# カレンダぺージからの追加
+app.include_router(auth_router) # 4. 【追加】 auth ルーターを登録
 
 @app.get('/')
 def read_root():
