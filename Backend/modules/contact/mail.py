@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Optional
 
 # Discord Webhook設定
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "YOUR_DISCORD_WEBHOOK_URL_HERE")
+# DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "YOUR_DISCORD_WEBHOOK_URL_HERE")
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 ENABLE_DISCORD = os.getenv("ENABLE_DISCORD", "true").lower() == "true"
 
 # デバッグ用ログ
@@ -82,6 +83,7 @@ def send_contact_discord(mail: str, detail: str) -> bool:
             return True
         else:
             print(f"Discord通知送信失敗: ステータスコード {response.status_code}")
+            #print(f"レスポンス内容: {response.text}")
             return False
             
     except Exception as e:
