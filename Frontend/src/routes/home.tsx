@@ -3,8 +3,6 @@ import { NavLink, useNavigate } from "react-router-dom"
 import * as THREE from "three"
 import {GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-import LoginDialog from "@/components/auth/LoginDialog"
-import { useAuth } from "@/context/AuthContext"
 import { siteNavigation } from "@/config/navigation"
 import { cn } from "@/lib/utils"
 
@@ -40,7 +38,7 @@ type InfoKey = "overview" | "content" | "fields"
 
 type PlanetMeta =
   | { label: string; type: "info"; infoKey: InfoKey }
-  | { label: string; type: "nav"; route: string; requireAuth: boolean }
+  | { label: string; type: "nav"; route: string }
 
 type PlanetConfig = {
   label: string
@@ -55,6 +53,7 @@ const TIME_SCALE = 0.6
 const LABEL_HEIGHT_OFFSET = 2.4
 const LABEL_FLOAT_AMPLITUDE = 0.15
 const STAR_COUNT = 1500
+const METAVERSE_APP_URL = "http://localhost:8000/static/metaberse/index.html"
 
 const createLabelSprite = (text: string) => {
   const baseWidth = 420
@@ -98,8 +97,6 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   )
 
 export const Home = () => {
-  const { isAuthenticated } = useAuth()
-  const [loginOpen, setLoginOpen] = useState(false)
   const navigate = useNavigate()
 
   const mountRef = useRef<HTMLDivElement | null>(null)
@@ -107,6 +104,8 @@ export const Home = () => {
   const hoveredMetaRef = useRef<PlanetMeta | null>(null)
   const zoomLevelRef = useRef(0)
   const transitionRef = useRef(false)
+  const transitionTimerRef = useRef<number | null>(null)
+  const metaverseLaunchedRef = useRef(false)
 
   const [zoomLevel, setZoomLevel] = useState(0)
   const [showTransition, setShowTransition] = useState(false)
@@ -316,10 +315,6 @@ export const Home = () => {
       }
 
       if (meta.type === "nav") {
-        if (meta.requireAuth && !isAuthenticated) {
-          setLoginOpen(true)
-          return
-        }
         navigate(meta.route)
       }
     }
@@ -439,6 +434,32 @@ export const Home = () => {
     }
   }, [])
 
+  useEffect(() => {
+    if (!showTransition) {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current)
+        transitionTimerRef.current = null
+      }
+      return
+    }
+
+    if (metaverseLaunchedRef.current) {
+      return
+    }
+
+    transitionTimerRef.current = window.setTimeout(() => {
+      metaverseLaunchedRef.current = true
+      window.location.href = METAVERSE_APP_URL
+    }, 3000)
+
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current)
+        transitionTimerRef.current = null
+      }
+    }
+  }, [showTransition])
+
   const infoPanel = (() => {
     if (!activeInfoKey) {
       return null
@@ -520,25 +541,12 @@ export const Home = () => {
             </div>
             <nav className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-md lg:w-auto">
               <div className="flex flex-wrap items-center justify-center gap-2">
-                {siteNavigation.map((item) => {
-                  const isCalendar = item.to === "/calendar"
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      className={navLinkClass}
-                      onClick={(e) => {
-                        if (isCalendar && !isAuthenticated) {
-                          e.preventDefault()
-                          setLoginOpen(true)
-                        }
-                      }}
-                    >
-                      <span>{item.label}</span>
-                      <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
-                    </NavLink>
-                  )
-                })}
+            {siteNavigation.map((item) => (
+              <NavLink key={item.to} to={item.to} className={navLinkClass}>
+                <span>{item.label}</span>
+                <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
+              </NavLink>
+            ))}
               </div>
             </nav>
           </header>
@@ -578,14 +586,6 @@ export const Home = () => {
           </div>
         )}
       </div>
-      <LoginDialog
-        open={loginOpen}
-        onOpenChange={setLoginOpen}
-        onSuccess={() => {
-          setLoginOpen(false)
-          navigate("/calendar")
-        }}
-      />
     </>
   )
 }
