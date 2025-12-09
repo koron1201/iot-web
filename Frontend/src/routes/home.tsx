@@ -29,12 +29,42 @@ const RESEARCH_FIELDS = [
   },
 ]
 
-const LAB_STATS = {
-  members: 31,
-  research: 12,
+type InfoKey = "news" | "contact" | "fields"
+
+type NewsItem = {
+  id: number
+  date: string
+  title: string
+  category: string
 }
 
-type InfoKey = "overview" | "content" | "fields"
+const CONTACT_TOPICS = [
+  {
+    title: "研究室見学",
+    description: "研究内容の紹介や設備見学の調整、日程に関するご相談を受け付けています。",
+  },
+  {
+    title: "学生相談・質問",
+    description: "配属に向けた質問や学習計画の相談など、学生の皆さまからの問い合わせに個別対応します。",
+  },
+]
+
+const LATEST_NEWS: NewsItem[] = [
+  { id: 1, date: "2025.11.06", title: "Webサイト開設", category: "その他" },
+  { id: 2, date: "2025.11.07", title: "研究成果が主要展示会で採択", category: "イベント" },
+  { id: 3, date: "2025.11.09", title: "都市OS向け実証実験を開始", category: "重要" },
+]
+
+const getNewsCategoryClass = (category: string) => {
+  switch (category) {
+    case "重要":
+      return "border-red-400/50 text-red-200"
+    case "イベント":
+      return "border-emerald-400/40 text-emerald-100"
+    default:
+      return "border-cyan-400/40 text-cyan-100"
+  }
+}
 
 type PlanetMeta =
   | { label: string; type: "info"; infoKey: InfoKey }
@@ -113,8 +143,8 @@ export const Home = () => {
 
   const planetConfigs = useMemo<PlanetConfig[]>(
     () => [
-      { label: "研究室概要", color: 0xff6b9d, meta: { type: "info", label: "研究室概要", infoKey: "overview" } },
-      { label: "主要コンテンツ", color: 0x6bffb9, meta: { type: "info", label: "主要コンテンツ", infoKey: "content" } },
+      { label: "ニュース", color: 0xff6b9d, meta: { type: "info", label: "ニュース", infoKey: "news" } },
+      { label: "お問い合わせ", color: 0x6bffb9, meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
       { label: "研究分野", color: 0xffd96b, meta: { type: "info", label: "研究分野", infoKey: "fields" } },
     ],
     []
@@ -465,42 +495,62 @@ export const Home = () => {
       return null
     }
 
-    if (activeInfoKey === "overview") {
+    if (activeInfoKey === "news") {
       return (
         <div className="space-y-4">
-          <h3 className="text-2xl font-semibold text-white">研究室概要</h3>
-          <p className="text-sm text-cyan-100/80">
-            都市OSやスマートシティの課題に対し、IoTソリューションをコアにAI・デジタルツイン・メタバース応用までを連動させて研究を推進しています。
-          </p>
-          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-200/70">Members</p>
-              <p className="text-3xl font-semibold text-white">{LAB_STATS.members}</p>
-              <p className="text-xs text-cyan-100/70">学生・研究員</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-200/70">Research</p>
-              <p className="text-3xl font-semibold text-white">{LAB_STATS.research}</p>
-              <p className="text-xs text-cyan-100/70">進行中テーマ</p>
-            </div>
+          <h3 className="text-2xl font-semibold text-white">ニュース</h3>
+          <p className="text-sm text-cyan-100/80">研究室の最新トピックをダイジェストでお届けします。</p>
+          <div className="space-y-3">
+            {LATEST_NEWS.map((news) => (
+              <div key={news.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/70">{news.date}</p>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${getNewsCategoryClass(news.category)}`}
+                  >
+                    {news.category}
+                  </span>
+                </div>
+                <p className="mt-3 text-base font-semibold text-white">{news.title}</p>
+              </div>
+            ))}
           </div>
+          <NavLink
+            to="/news"
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200 hover:text-white"
+          >
+            ニュース一覧を見る
+            <span aria-hidden>→</span>
+          </NavLink>
         </div>
       )
     }
 
-    if (activeInfoKey === "content") {
+    if (activeInfoKey === "contact") {
       return (
         <div className="space-y-4">
-          <h3 className="text-2xl font-semibold text-white">主要コンテンツ</h3>
-          <p className="text-sm text-cyan-100/80">研究室の活動や実績を紹介するコンテンツをご覧ください。</p>
+          <h3 className="text-2xl font-semibold text-white">お問い合わせ</h3>
+          <p className="text-sm text-cyan-100/80">
+            共同研究のご提案から取材のご相談まで、フォームから随時受け付けています。
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            {siteNavigation.map((item) => (
-              <div key={item.to} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-cyan-50">
-                <p className="font-semibold text-white">{item.label}</p>
-                <p className="text-xs text-cyan-100/70">研究室の{item.label}に関する詳細情報をご確認いただけます。</p>
+            {CONTACT_TOPICS.map((topic) => (
+              <div key={topic.title} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-sm font-semibold text-white">{topic.title}</p>
+                <p className="text-xs text-cyan-100/80">{topic.description}</p>
               </div>
             ))}
           </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-cyan-100/80">
+            <p>必要事項（メールアドレス／お問い合わせ内容）をご記入のうえ送信してください。順次ご返信いたします。</p>
+          </div>
+          <NavLink
+            to="/contact"
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200 hover:text-white"
+          >
+            お問い合わせフォームへ
+            <span aria-hidden>→</span>
+          </NavLink>
         </div>
       )
     }
