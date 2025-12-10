@@ -15,6 +15,7 @@ import { Submission } from "@/routes/submission"
 import { Calendar } from "@/routes/calendar"
 import ProtectedRoute from "@/routes/ProtectedRoute"
 import { AuthProvider } from "@/context/AuthContext"
+import { Login } from "@/routes/Login"   // カレンダーぺージのログインページへのルート(23rd119)
 
 const router = createBrowserRouter([
   {
@@ -28,13 +29,26 @@ const router = createBrowserRouter([
       { path: "news", element: <News /> },
       { path: "contact", element: <Contact /> },
       { path: "submission", element: <Submission /> },
-      { path: "calendar", element: (
+      { path: "calendar", element: <Calendar />},
+      /* 一時的にカレンダーぺージへの制限を解除して、上行に置き換え(23rd119)_カレンダーぺージからの置き換え
+      path: "calendar", element: (
         <ProtectedRoute>
           <Calendar />
         </ProtectedRoute>
-      ) },
+      },
+       */
     ],
   },
+  //以下、カレンダーぺージからの追加(23rd119)
+  {
+    path: "/login", // 2. 【追加】 /login のルート
+    element: <Login />,
+  },
+  // (もし登録ページも追加するならここ)
+  // {
+  //   path: "/register",
+  //   element: <Register />,
+  // }
 ])
 
 const container = document.getElementById("root")!

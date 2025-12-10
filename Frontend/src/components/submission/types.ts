@@ -5,6 +5,7 @@ export type SubmissionProject = {
   description: string
   rarity: number
   tags?: string[]
+  file_path?: string
 }
 
 export type Scene3DProps = {
