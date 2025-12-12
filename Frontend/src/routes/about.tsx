@@ -107,9 +107,6 @@ export const About: React.FC = () => {
           <p className="text-cyan-100/80 mt-2">
             専門分野：IoTシステム、組込みソフトウェア、情報ネットワーク
           </p>
-          <p className="text-cyan-100/80 mt-2">
-            「自ら考え、試行錯誤を重ねながら新しい価値を創造できるエンジニアを育成します。」
-          </p>
         </div>
       </section>
 

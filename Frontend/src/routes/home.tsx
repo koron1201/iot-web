@@ -192,12 +192,12 @@ export const Home = () => {
     let planetModel: THREE.Group | null = null
 
     loader.load(
-      '/face.glb', 
+      '/new.glb', 
       (gltf:GLTF) => {
         console.log('GLB loaded:', gltf);
         planetModel = gltf.scene
-        planetModel.scale.set(0.7, 0.7, 0.7)
-        planetModel.position.set(0, 0, 0)
+        planetModel.scale.set(4, 4, 4)
+        planetModel.position.set(0, -3, 0)
         planetModel.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = false
@@ -215,10 +215,10 @@ export const Home = () => {
     )
 
     // --- ライト設定 ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7) // 全体を柔らかく照らす
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2) // 全体を柔らかく照らす
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8) // 主光源
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5) // 主光源
     directionalLight.position.set(5, 10, 7)
     scene.add(directionalLight)
 
@@ -396,6 +396,7 @@ export const Home = () => {
 
       if (planetModel) {
          planetModel.rotation.y += 0.002
+         planetModel.rotation.x = Math.PI / 7
       }
 
       //gridSphere.rotation.y += 0.003
