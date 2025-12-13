@@ -128,12 +128,14 @@ const createSunFlareSprite = () => {
     size / 2,
     size / 2
   )
-gradient.addColorStop(0.0,  "rgba(255,210,160,0.95)") // 白熱コア
-gradient.addColorStop(0.12, "rgba(255,190,120,0.95)") 
-gradient.addColorStop(0.28, "rgba(255,120,40,0.85)")  // 濃オレンジ
-gradient.addColorStop(0.48, "rgba(255,70,20,0.65)")   // 赤寄り
-gradient.addColorStop(0.70, "rgba(180,30,10,0.35)")   // 焦げ赤
-gradient.addColorStop(1.0,  "rgba(120,10,5,0.0)")
+
+  gradient.addColorStop(0.0,  "rgba(255,255,220,1.0)")  // 白熱
+  gradient.addColorStop(0.1,  "rgba(255,200,120,0.95)")
+  gradient.addColorStop(0.25, "rgba(255,120,40,0.9)")
+  gradient.addColorStop(0.45, "rgba(255,60,10,0.75)")
+  gradient.addColorStop(0.65, "rgba(180,20,5,0.45)")
+  gradient.addColorStop(0.85, "rgba(120,5,2,0.2)")
+  gradient.addColorStop(1.0,  "rgba(50,0,0,0.0)")
 
 
   ctx.fillStyle = gradient
@@ -229,10 +231,10 @@ export const Home = () => {
     // --- 太陽 ---
     const sunGeometry = new THREE.SphereGeometry(25, 64, 64)
     const sunMaterial = new THREE.MeshStandardMaterial({
-      color: 0xfff2cc,
-      emissive: 0xffaa33,
-      emissiveIntensity: 1.6,
-      roughness: 0.4,
+      color: 0xff3300,
+      emissive: 0xff1100,
+      emissiveIntensity: 4.0,
+      roughness: 1.0,
       metalness: 0,
     })
 
@@ -242,10 +244,30 @@ export const Home = () => {
     sun.position.set(-60, 0, -50)
     scene.add(sun)
 
-    // --- 太陽フレア（Sprite）---
-    const sunFlare = createSunFlareSprite()
-    sunFlare.position.copy(sun.position)
-    scene.add(sunFlare)
+    // 赤系 PointLight
+const sunLight = new THREE.PointLight(0xff5522, 2.5, 200)
+sunLight.position.copy(sun.position)
+scene.add(sunLight)
+
+    // --- 太陽フレア（多層）---
+    const sunFlareCore = createSunFlareSprite()
+    sunFlareCore.scale.set(25, 25, 1)
+    sunFlareCore.material.opacity = 0.9
+    sunFlareCore.position.copy(sun.position)
+    scene.add(sunFlareCore)
+
+    const sunFlareOuter = createSunFlareSprite()
+    sunFlareOuter.scale.set(55, 55, 1)
+    sunFlareOuter.material.opacity = 0.45
+    sunFlareOuter.position.copy(sun.position)
+    scene.add(sunFlareOuter)
+
+    const sunFlareHalo = createSunFlareSprite()
+    sunFlareHalo.scale.set(90, 90, 1)
+    sunFlareHalo.material.opacity = 0.25
+    sunFlareHalo.position.copy(sun.position)
+    scene.add(sunFlareHalo)
+
 
 
     const loader = new GLTFLoader()
@@ -512,7 +534,10 @@ export const Home = () => {
       const delta = deltaMs / 1000
       time += delta * TIME_SCALE
       sun.rotation.y += 0.0002
-      sunFlare.material.opacity = 0.6 + Math.sin(time * 0.8) * 0.1
+      //sunFlare.material.opacity = 0.6 + Math.sin(time * 0.8) * 0.1
+      sunFlareCore.material.opacity = 0.85 + Math.sin(time * 1.5) * 0.1
+      sunFlareOuter.material.opacity = 0.45 + Math.sin(time * 0.9 + 2) * 0.08
+      sunFlareHalo.material.opacity = 0.25 + Math.sin(time * 0.5 + 4) * 0.05
 
 
       if (planetModel) {
