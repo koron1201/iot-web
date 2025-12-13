@@ -129,6 +129,8 @@ export const Home = () => {
   const transitionRef = useRef(false)
   const transitionTimerRef = useRef<number | null>(null)
   const metaverseLaunchedRef = useRef(false)
+  const rightDragActiveRef = useRef(false)
+  const lastDragPosRef = useRef({ x: 0, y: 0 })
 
   const [zoomLevel, setZoomLevel] = useState(0)
   const [showTransition, setShowTransition] = useState(false)
@@ -191,6 +193,7 @@ export const Home = () => {
         planetModel = gltf.scene
         planetModel.scale.set(4, 4, 4)
         planetModel.position.set(0, -3, 0)
+        planetModel.rotation.x = Math.PI / 7
         planetModel.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = false
@@ -325,6 +328,14 @@ export const Home = () => {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
       pointerDirty = true
+
+      if (rightDragActiveRef.current && planetModel) {
+        const deltaX = event.clientX - lastDragPosRef.current.x
+        const deltaY = event.clientY - lastDragPosRef.current.y
+        lastDragPosRef.current = { x: event.clientX, y: event.clientY }
+        planetModel.rotation.y += deltaX * 0.005
+        planetModel.rotation.x = clamp(planetModel.rotation.x + deltaY * 0.005, -Math.PI / 2.5, Math.PI / 2.5)
+      }
     }
 
     const handleClick = () => {
@@ -349,6 +360,28 @@ export const Home = () => {
       setZoomLevel(nextLevel)
     }
 
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button !== 2) {
+        return
+      }
+      rightDragActiveRef.current = true
+      lastDragPosRef.current = { x: event.clientX, y: event.clientY }
+    }
+
+    const handleMouseUp = (event: MouseEvent) => {
+      if (event.button !== 2) {
+        return
+      }
+      rightDragActiveRef.current = false
+    }
+
+    const handleContextMenu = (event: MouseEvent) => {
+      if (!mountElement.contains(event.target as Node)) {
+        return
+      }
+      event.preventDefault()
+    }
+
     const handleResize = () => {
       const nextWidth = mountElement.clientWidth || window.innerWidth
       const nextHeight = mountElement.clientHeight || window.innerHeight
@@ -363,9 +396,12 @@ export const Home = () => {
     }
 
     window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousedown", handleMouseDown)
+    window.addEventListener("mouseup", handleMouseUp)
     window.addEventListener("click", handleClick)
     window.addEventListener("wheel", handleWheel)
     window.addEventListener("resize", handleResize)
+    mountElement.addEventListener("contextmenu", handleContextMenu)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
     let time = 0
@@ -388,8 +424,9 @@ export const Home = () => {
       time += delta * TIME_SCALE
 
       if (planetModel) {
-         planetModel.rotation.y += 0.002
-         planetModel.rotation.x = Math.PI / 7
+         if (!rightDragActiveRef.current) {
+           planetModel.rotation.y += 0.002
+         }
       }
 
       //gridSphere.rotation.y += 0.003
@@ -447,9 +484,12 @@ export const Home = () => {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mousedown", handleMouseDown)
+      window.removeEventListener("mouseup", handleMouseUp)
       window.removeEventListener("click", handleClick)
       window.removeEventListener("wheel", handleWheel)
       window.removeEventListener("resize", handleResize)
+      mountElement.removeEventListener("contextmenu", handleContextMenu)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       document.body.style.cursor = "default"
       cancelAnimationFrame(animationId)
