@@ -1,5 +1,7 @@
-import { PageQuickNav } from "@/components/PageQuickNav"
-import {motion } from "framer-motion"
+import { NavLink } from "react-router-dom"
+import { motion } from "framer-motion"
+import { siteNavigation } from "@/config/navigation"
+import { cn } from "@/lib/utils"
 
 {/*研究内容*/}
 interface ResearchProps{
@@ -19,6 +21,13 @@ const containerVariants = {
   hidden:{},
   show:{transition:{staggerChildren: 0.05}},
   };
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
+    "text-sky-200/80 hover:text-white hover:bg-white/5",
+    isActive ? "text-white bg-white/10" : ""
+  )
 
 const ResearchList: ResearchProps[] = [
   { name: "阿部瑞樹",     title: "仮想空間における楽器演奏の協調方式の提案と実装", description: "高価格な楽器を使わずに、より手軽なVR上でのアバター表現などを活用した演奏可能な演奏支援システムの開発を行う" },
@@ -67,38 +76,49 @@ export const Research: React.FC = () => {
       animate={{ y: "0%", opacity: 1 }}
       exit={{ y: "100%", opacity: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-    > 
-      <PageQuickNav/> 
-      
+    >
       {/*背景*/}
       <div style={{ position: "fixed", inset: 0, overflow: "hidden", background: `radial-gradient(circle at 30% 70%, #1c1c2f 0%, #0a0a0a 80%),linear-gradient(to top right, #0a0a0a 0%, #000 100%)`, zIndex: 0 }}>
         {stars}
       </div>
 
-      {/* コンテンツ */}
-      <div style={{ position: "relative", zIndex: 10, padding: "3rem", color: "white"}}>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-white">研究内容</h1>
-        <div style={{ display: "grid", gap: "2.0rem", gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))", marginTop: "2.0rem" }}>
-          {ResearchList.map((item, index) => (
-            <motion.div
-              key={index}
-              style={{
-                borderRadius: "1rem",
-                border: "1px solid rgba(255,255,255,0.2)",
-                padding: "1.5rem",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                backgroundColor: "rgba(20,20,30,0.65)",
-                transition: "all 1.0s",
-              }}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.1, delay: index * 0.05 }}
-            >
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>◆ {item.title}</h2>
-              <p style={{ marginTop: "0.5rem", color: "#aaa" }}>研究者: {item.name}</p>
-              <h1 className="mt-6 font-bold tracking-tight sm:text-1rem text-cyan-100/80">{item.description}</h1>
-            </motion.div>
-          ))}
+      <div className="relative z-10">
+        <nav className="mt-4 w-full rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40 lg:w-auto">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
+              <NavLink key={item.to} to={item.to} className={navLinkClass}>
+                <span>{item.label}</span>
+                <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+        
+        {/* コンテンツ */}
+        <div style={{ position: "relative", zIndex: 10, padding: "3rem", color: "white"}}>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-white">研究内容</h1>
+          <div style={{ display: "grid", gap: "2.0rem", gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))", marginTop: "2.0rem" }}>
+            {ResearchList.map((item, index) => (
+              <motion.div
+                key={index}
+                style={{
+                  borderRadius: "1rem",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  padding: "1.5rem",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  backgroundColor: "rgba(20,20,30,0.65)",
+                  transition: "all 1.0s",
+                }}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.1, delay: index * 0.05 }}
+              >
+                <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>◆ {item.title}</h2>
+                <p style={{ marginTop: "0.5rem", color: "#aaa" }}>研究者: {item.name}</p>
+                <h1 className="mt-6 font-bold tracking-tight sm:text-1rem text-cyan-100/80">{item.description}</h1>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
