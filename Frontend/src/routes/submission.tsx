@@ -1,17 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 
+import { NavLink } from "react-router-dom"
 import { SpaceHangarBackdrop } from "@/components/backgrounds/SpaceHangarBackdrop"
 import { Scene3D } from "@/components/submission/Scene3D"
 import { ViewportStars } from "@/components/submission/ViewportStars"
 import { ProjectModal } from "@/components/submission/ProjectModal"
 import type { SubmissionProject } from "@/components/submission/types"
-import { PageQuickNav } from "@/components/PageQuickNav"
 import { deliverables } from "@/data/deliverables"
+import { siteNavigation } from "@/config/navigation"
+import { cn } from "@/lib/utils"
 
 const SUBMISSION_ENDPOINT = "http://localhost:8000/submission/"
 const RARITY_PALETTE = [5, 4, 4, 3, 5, 4, 3, 5]
 
 const sanitizeFilePath = (value: string) => value.replace(/^\/+/, "")
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
+    "text-sky-200/80 hover:text-white hover:bg-white/5",
+    isActive ? "text-white bg-white/10" : ""
+  )
 
 export const Submission: React.FC = () => {
   const fallbackProjects = useMemo<SubmissionProject[]>(
@@ -133,7 +142,6 @@ export const Submission: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <PageQuickNav />
         <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
           成果物を読み込み中です...
         </div>
@@ -144,7 +152,6 @@ export const Submission: React.FC = () => {
   if (!hasDeliverables) {
     return (
       <>
-        <PageQuickNav />
         <div className="container mx-auto max-w-4xl space-y-6 py-12">
           <header className="space-y-3">
             <h1 className="text-3xl font-bold">成果物紹介</h1>
@@ -162,11 +169,21 @@ export const Submission: React.FC = () => {
   }
 
   return (
-    <>
-      <PageQuickNav />
-      <section className="relative min-h-screen w-full overflow-hidden bg-[#020417] text-white">
+    <div className="relative min-h-screen bg-[#020417] text-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(59,130,246,0.2),transparent_65%)]" />
+
+      <nav className="relative z-20 mx-auto mt-4 w-full max-w-6xl rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
+            <NavLink key={item.to} to={item.to} className={navLinkClass}>
+              <span>{item.label}</span>
+              <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+      <section className="relative min-h-screen w-full overflow-hidden">
         <SpaceHangarBackdrop />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(59,130,246,0.2),transparent_65%)]" />
 
         <div className="relative z-10 mx-auto mt-16 flex w-full max-w-6xl flex-col items-center gap-6 px-4 sm:px-8">
           <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.6em] text-cyan-100/50">
@@ -228,7 +245,7 @@ export const Submission: React.FC = () => {
 
         <ProjectModal project={selectedProject} onClose={closeModal} />
       </section>
-    </>
+    </div>
   )
 }
 

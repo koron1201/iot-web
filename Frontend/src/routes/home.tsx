@@ -4,6 +4,8 @@ import * as THREE from "three"
 import {GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import { siteNavigation } from "@/config/navigation"
+import { newsItems } from "@/data/news"
+import type { NewsItem as SharedNewsItem } from "@/data/news"
 import { cn } from "@/lib/utils"
 
 const RESEARCH_FIELDS = [
@@ -31,13 +33,6 @@ const RESEARCH_FIELDS = [
 
 type InfoKey = "news" | "contact" | "fields"
 
-type NewsItem = {
-  id: number
-  date: string
-  title: string
-  category: string
-}
-
 const CONTACT_TOPICS = [
   {
     title: "研究室見学",
@@ -49,11 +44,7 @@ const CONTACT_TOPICS = [
   },
 ]
 
-const LATEST_NEWS: NewsItem[] = [
-  { id: 1, date: "2025.11.06", title: "Webサイト開設", category: "その他" },
-  { id: 2, date: "2025.11.07", title: "研究成果が主要展示会で採択", category: "イベント" },
-  { id: 3, date: "2025.11.09", title: "都市OS向け実証実験を開始", category: "重要" },
-]
+const LATEST_NEWS: SharedNewsItem[] = newsItems.slice(0, 3)
 
 const getNewsCategoryClass = (category: string) => {
   switch (category) {
@@ -61,6 +52,8 @@ const getNewsCategoryClass = (category: string) => {
       return "border-red-400/50 text-red-200"
     case "イベント":
       return "border-emerald-400/40 text-emerald-100"
+    case "お知らせ":
+      return "border-sky-400/40 text-sky-100"
     default:
       return "border-cyan-400/40 text-cyan-100"
   }
