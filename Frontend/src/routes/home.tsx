@@ -578,9 +578,9 @@ export const Home = () => {
       //})
 
       if (planetModel) {
-         
-         planetModel.rotation.y += 0.002
-         //planetModel.rotation.x = Math.PI / 7
+         if (!rightDragActiveRef.current) {
+           planetModel.rotation.y += 0.002
+         }
       }
 
       //gridSphere.rotation.y += 0.003
