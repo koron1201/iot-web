@@ -578,10 +578,7 @@ export const Home = () => {
       //})
 
       if (planetModel) {
-<<<<<<< HEAD
-=======
          
->>>>>>> 52229f53 (Update Home.tsx with new sun and flare effects)
          planetModel.rotation.y += 0.002
          //planetModel.rotation.x = Math.PI / 7
       }
