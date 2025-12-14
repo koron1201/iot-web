@@ -229,25 +229,46 @@ export const Home = () => {
     scene.add(stars)
 
     // --- 太陽 ---
-    const sunGeometry = new THREE.SphereGeometry(25, 64, 64)
-    const sunMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff3300,
-      emissive: 0xff1100,
-      emissiveIntensity: 4.0,
-      roughness: 1.0,
-      metalness: 0,
-    })
+    //const sunGeometry = new THREE.SphereGeometry(25, 64, 64)
+    //const sunMaterial = new THREE.MeshStandardMaterial({
+      //color: 0xff3300,
+      //emissive: 0xff1100,
+    //  emissiveIntensity: 4.0,
+    //  roughness: 1.0,
+    //  metalness: 0,
+    //})
 
-    const sun = new THREE.Mesh(sunGeometry, sunMaterial)
+    //const sun = new THREE.Mesh(sunGeometry, sunMaterial)
 
     // 左に見切れる位置
-    sun.position.set(-60, 0, -50)
+    //sun.position.set(-60, 0, -50)
+    //scene.add(sun)
+
+    // 新しいシェーダー太陽に置き換え
+    const sunShaderMaterial = new THREE.ShaderMaterial({
+      uniforms: { time: { value: 0 } },
+      vertexShader: `...`,
+      fragmentShader: `...`,
+    })
+    const sunGeometry = new THREE.SphereGeometry(60, 128, 128)
+    const sun = new THREE.Mesh(sunGeometry, sunShaderMaterial)
+    sun.position.set(-50, -10, -50)
     scene.add(sun)
 
+    // --- 炎スプライト/パーティクル ---
+    //const flameSprites: THREE.Sprite[] = []
+    //for (let i = 0; i < 5; i++) {
+      //const sprite = createSunFlareSprite() // 必要なら赤～オレンジ系に色変更
+      //sprite.scale.set(15 + i * 5, 15 + i * 5, 1)
+      //sprite.position.copy(sun.position)
+      //scene.add(sprite)
+      //flameSprites.push(sprite)
+    //}
+
     // 赤系 PointLight
-const sunLight = new THREE.PointLight(0xff5522, 2.5, 200)
-sunLight.position.copy(sun.position)
-scene.add(sunLight)
+    const sunLight = new THREE.PointLight(0xff5522, 1.5, 200)
+    sunLight.position.copy(sun.position)
+    scene.add(sunLight)
 
     // --- 太陽フレア（多層）---
     const sunFlareCore = createSunFlareSprite()
@@ -280,7 +301,8 @@ scene.add(sunLight)
         planetModel = gltf.scene
         planetModel.scale.set(4, 4, 4)
         planetModel.position.set(0, -3, 0)
-        planetModel.rotation.x = Math.PI / 7
+        //planetModel.rotation.x = Math.PI / 7
+        planetModel.rotation.x = 0
         planetModel.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = false
@@ -533,12 +555,27 @@ scene.add(sunLight)
       lastFrameTime = now
       const delta = deltaMs / 1000
       time += delta * TIME_SCALE
-      sun.rotation.y += 0.0002
+      //sun.rotation.y += 0.0002
       //sunFlare.material.opacity = 0.6 + Math.sin(time * 0.8) * 0.1
-      sunFlareCore.material.opacity = 0.85 + Math.sin(time * 1.5) * 0.1
-      sunFlareOuter.material.opacity = 0.45 + Math.sin(time * 0.9 + 2) * 0.08
-      sunFlareHalo.material.opacity = 0.25 + Math.sin(time * 0.5 + 4) * 0.05
-
+      //sunFlareCore.material.opacity = 0.85 + Math.sin(time * 1.5) * 0.1
+      //sunFlareOuter.material.opacity = 0.45 + Math.sin(time * 0.9 + 2) * 0.08
+      //sunFlareHalo.material.opacity = 0.25 + Math.sin(time * 0.5 + 4) * 0.05
+       if ((sun.material as THREE.ShaderMaterial).uniforms?.time) {
+        (sun.material as THREE.ShaderMaterial).uniforms.time.value = time
+      }
+      // 🔥 炎スプライトを追加した場合
+      //flameSprites.forEach((sprite, i) => {
+        //const t = time * (0.5 + i * 0.1)
+        // 太陽の周りをめらめら揺れる
+        //sprite.position.x = sun.position.x + Math.sin(t*1 + i) * (5 + i*0.5)
+        //sprite.position.y = sun.position.y + Math.cos(t*1 + i) * (5 + i*0.5)
+        //sprite.position.z = sun.position.z + Math.sin(t*1.5 + i) * 2
+        // スプライトのスケールを揺らす
+        //const scale = 20 + Math.sin(t*2 + i) * 5
+        //sprite.scale.set(scale, scale, 1)
+        // 透明度も揺らす
+        //sprite.material.opacity = 0.4 + 0.3 * Math.sin(t*2.5 + i)
+      //})
 
       if (planetModel) {
 <<<<<<< HEAD
