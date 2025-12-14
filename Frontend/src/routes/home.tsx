@@ -66,6 +66,7 @@ type PlanetMeta =
 type PlanetConfig = {
   label: string
   color: number
+  modelPath: string
   meta: PlanetMeta
 }
 
@@ -112,6 +113,49 @@ const createLabelSprite = (text: string) => {
   return sprite
 }
 
+const createSunFlareSprite = () => {
+  const size = 256
+  const canvas = document.createElement("canvas")
+  canvas.width = size
+  canvas.height = size
+
+  const ctx = canvas.getContext("2d")!
+  const gradient = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2
+  )
+
+  gradient.addColorStop(0.0,  "rgba(255,255,220,1.0)")  // 白熱
+  gradient.addColorStop(0.1,  "rgba(255,200,120,0.95)")
+  gradient.addColorStop(0.25, "rgba(255,120,40,0.9)")
+  gradient.addColorStop(0.45, "rgba(255,60,10,0.75)")
+  gradient.addColorStop(0.65, "rgba(180,20,5,0.45)")
+  gradient.addColorStop(0.85, "rgba(120,5,2,0.2)")
+  gradient.addColorStop(1.0,  "rgba(50,0,0,0.0)")
+
+
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, size, size)
+
+  const texture = new THREE.CanvasTexture(canvas)
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
+  })
+
+  const sprite = new THREE.Sprite(material)
+  sprite.scale.set(40, 40, 1) // ← フレアの大きさ
+  return sprite
+}
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
@@ -138,9 +182,9 @@ export const Home = () => {
 
   const planetConfigs = useMemo<PlanetConfig[]>(
     () => [
-      { label: "ニュース", color: 0xff6b9d, meta: { type: "info", label: "ニュース", infoKey: "news" } },
-      { label: "お問い合わせ", color: 0x6bffb9, meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
-      { label: "研究分野", color: 0xffd96b, meta: { type: "info", label: "研究分野", infoKey: "fields" } },
+      { label: "ニュース", color: 0xff6b9d, modelPath: "/石.glb",meta: { type: "info", label: "ニュース", infoKey: "news" } },
+      { label: "お問い合わせ", color: 0x6bffb9,modelPath: "/ロケット.glb", meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
+      { label: "研究分野", color: 0xffd96b,modelPath: "/人工衛星.glb", meta: { type: "info", label: "研究分野", infoKey: "fields" } },
     ],
     []
   )
@@ -152,8 +196,9 @@ export const Home = () => {
 
     const mountElement = mountRef.current
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000)
-    camera.position.z = 15
+    const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000)
+    camera.position.z = 40
+
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO)
@@ -183,17 +228,81 @@ export const Home = () => {
     const stars = new THREE.Points(starsGeometry, starsMaterial)
     scene.add(stars)
 
+    // --- 太陽 ---
+    //const sunGeometry = new THREE.SphereGeometry(25, 64, 64)
+    //const sunMaterial = new THREE.MeshStandardMaterial({
+      //color: 0xff3300,
+      //emissive: 0xff1100,
+    //  emissiveIntensity: 4.0,
+    //  roughness: 1.0,
+    //  metalness: 0,
+    //})
+
+    //const sun = new THREE.Mesh(sunGeometry, sunMaterial)
+
+    // 左に見切れる位置
+    //sun.position.set(-60, 0, -50)
+    //scene.add(sun)
+
+    // 新しいシェーダー太陽に置き換え
+    const sunShaderMaterial = new THREE.ShaderMaterial({
+      uniforms: { time: { value: 0 } },
+      vertexShader: `...`,
+      fragmentShader: `...`,
+    })
+    const sunGeometry = new THREE.SphereGeometry(60, 128, 128)
+    const sun = new THREE.Mesh(sunGeometry, sunShaderMaterial)
+    sun.position.set(-50, -10, -50)
+    scene.add(sun)
+
+    // --- 炎スプライト/パーティクル ---
+    //const flameSprites: THREE.Sprite[] = []
+    //for (let i = 0; i < 5; i++) {
+      //const sprite = createSunFlareSprite() // 必要なら赤～オレンジ系に色変更
+      //sprite.scale.set(15 + i * 5, 15 + i * 5, 1)
+      //sprite.position.copy(sun.position)
+      //scene.add(sprite)
+      //flameSprites.push(sprite)
+    //}
+
+    // 赤系 PointLight
+    const sunLight = new THREE.PointLight(0xff5522, 1.5, 200)
+    sunLight.position.copy(sun.position)
+    scene.add(sunLight)
+
+    // --- 太陽フレア（多層）---
+    const sunFlareCore = createSunFlareSprite()
+    sunFlareCore.scale.set(25, 25, 1)
+    sunFlareCore.material.opacity = 0.9
+    sunFlareCore.position.copy(sun.position)
+    scene.add(sunFlareCore)
+
+    const sunFlareOuter = createSunFlareSprite()
+    sunFlareOuter.scale.set(55, 55, 1)
+    sunFlareOuter.material.opacity = 0.45
+    sunFlareOuter.position.copy(sun.position)
+    scene.add(sunFlareOuter)
+
+    const sunFlareHalo = createSunFlareSprite()
+    sunFlareHalo.scale.set(90, 90, 1)
+    sunFlareHalo.material.opacity = 0.25
+    sunFlareHalo.position.copy(sun.position)
+    scene.add(sunFlareHalo)
+
+
+
     const loader = new GLTFLoader()
     let planetModel: THREE.Group | null = null
 
     loader.load(
-      '/new.glb', 
+      '/3.glb', 
       (gltf:GLTF) => {
         console.log('GLB loaded:', gltf);
         planetModel = gltf.scene
         planetModel.scale.set(4, 4, 4)
         planetModel.position.set(0, -3, 0)
-        planetModel.rotation.x = Math.PI / 7
+        //planetModel.rotation.x = Math.PI / 7
+        planetModel.rotation.x = 0
         planetModel.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = false
@@ -211,20 +320,27 @@ export const Home = () => {
     )
 
     // --- ライト設定 ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2) // 全体を柔らかく照らす
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.6) // 全体を柔らかく照らす
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5) // 主光源
-    directionalLight.position.set(5, 10, 7)
-    scene.add(directionalLight)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5)
+    keyLight.position.set(6, 10, 6)
+    scene.add(keyLight)
 
-    const fillLight1 = new THREE.PointLight(0xffffff, 0.4) // 補助光1
-    fillLight1.position.set(-5, 5, 5)
-    scene.add(fillLight1)
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.8)
+    fillLight.position.set(-6, 4, 3)
+    scene.add(fillLight)
 
-    const fillLight2 = new THREE.PointLight(0xffffff, 0.3) // 補助光2
-    fillLight2.position.set(0, -5, 5)
-    scene.add(fillLight2)
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.4)
+    rimLight.position.set(-4, 6, -8)
+    scene.add(rimLight)
+
+    //fillLight1.position.set(-5, 5, 5)
+    //scene.add(fillLight1)
+
+    //const fillLight2 = new THREE.PointLight(0xffffff, 0.3) // 補助光2
+    //fillLight2.position.set(0, -5, 5)
+    //scene.add(fillLight2)
 
 
     //const gridSphere = new THREE.Mesh(
@@ -250,54 +366,71 @@ export const Home = () => {
     //scene.add(glow)
 
     const planets: Array<{
-      mesh: THREE.Mesh
-      glow: THREE.Mesh
-      glowMaterial: THREE.MeshBasicMaterial
+      //mesh: THREE.Mesh
+      object: THREE.Object3D
+      //glow: THREE.Mesh
+      //glowMaterial: THREE.MeshBasicMaterial
       labelSprite: THREE.Sprite
       labelMaterial: THREE.SpriteMaterial
       label: string
       offset: number
       meta: PlanetMeta
     }> = []
-    const planetMeshes: THREE.Mesh[] = []
+    const planetMeshes: THREE.Object3D[] = []
     planetConfigs.forEach((data, index) => {
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.85, 32, 32),
-        new THREE.MeshPhongMaterial({
-          color: data.color,
-          emissive: data.color,
-          emissiveIntensity: 0.35,
-        })
-      )
-      mesh.userData = { label: data.label, meta: data.meta }
+  loader.load(
+    data.modelPath,
+    (gltf) => {
+      const model = gltf.scene
+      model.scale.set(1.2, 1.2, 1.2)
+      model.userData = { label: data.label, meta: data.meta }
 
+      model.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = false
+          child.receiveShadow = false
+        }
+      })
+
+      scene.add(model)
+
+      // glow
       const glowMaterial = new THREE.MeshBasicMaterial({
         color: data.color,
         transparent: true,
         opacity: 0.35,
         side: THREE.BackSide,
       })
-      const glowMesh = new THREE.Mesh(new THREE.SphereGeometry(1.05, 16, 16), glowMaterial)
+      //const glowMesh = new THREE.Mesh(
+        //new THREE.SphereGeometry(1.5, 16, 16),
+        //glowMaterial
+      //)
+      //scene.add(glowMesh)
+
+      // label
       const labelSprite = createLabelSprite(data.label)
-      labelSprite.position.set(0, 2.3, 0)
-      const labelMaterial = labelSprite.material as THREE.SpriteMaterial
-      labelMaterial.opacity = 0
       labelSprite.visible = false
+      scene.add(labelSprite)
+
       planets.push({
-        mesh,
-        glow: glowMesh,
-        glowMaterial,
+        //mesh: model,
+        object: model,
+        //glow: glowMesh,
+        //glowMaterial,
         labelSprite,
-        labelMaterial,
+        labelMaterial: labelSprite.material as THREE.SpriteMaterial,
         label: data.label,
         offset: index * (Math.PI / 2.5),
         meta: data.meta,
       })
-      planetMeshes.push(mesh)
-      scene.add(mesh)
-      scene.add(glowMesh)
-      scene.add(labelSprite)
-    })
+
+      planetMeshes.push(model)
+    },
+    undefined,
+    (err) => console.error("GLB load error:", data.modelPath, err)
+  )
+})
+
 
     scene.add(new THREE.AmbientLight(0x404040, 1))
     const pointLight = new THREE.PointLight(0xffffff, 1.4, 100)
@@ -422,6 +555,27 @@ export const Home = () => {
       lastFrameTime = now
       const delta = deltaMs / 1000
       time += delta * TIME_SCALE
+      //sun.rotation.y += 0.0002
+      //sunFlare.material.opacity = 0.6 + Math.sin(time * 0.8) * 0.1
+      //sunFlareCore.material.opacity = 0.85 + Math.sin(time * 1.5) * 0.1
+      //sunFlareOuter.material.opacity = 0.45 + Math.sin(time * 0.9 + 2) * 0.08
+      //sunFlareHalo.material.opacity = 0.25 + Math.sin(time * 0.5 + 4) * 0.05
+       if ((sun.material as THREE.ShaderMaterial).uniforms?.time) {
+        (sun.material as THREE.ShaderMaterial).uniforms.time.value = time
+      }
+      // 🔥 炎スプライトを追加した場合
+      //flameSprites.forEach((sprite, i) => {
+        //const t = time * (0.5 + i * 0.1)
+        // 太陽の周りをめらめら揺れる
+        //sprite.position.x = sun.position.x + Math.sin(t*1 + i) * (5 + i*0.5)
+        //sprite.position.y = sun.position.y + Math.cos(t*1 + i) * (5 + i*0.5)
+        //sprite.position.z = sun.position.z + Math.sin(t*1.5 + i) * 2
+        // スプライトのスケールを揺らす
+        //const scale = 20 + Math.sin(t*2 + i) * 5
+        //sprite.scale.set(scale, scale, 1)
+        // 透明度も揺らす
+        //sprite.material.opacity = 0.4 + 0.3 * Math.sin(t*2.5 + i)
+      //})
 
       if (planetModel) {
          if (!rightDragActiveRef.current) {
@@ -434,13 +588,34 @@ export const Home = () => {
 
       if (pointerDirty) {
         raycaster.setFromCamera(mouse, camera)
-        const intersects = raycaster.intersectObjects(planetMeshes, false)
+        const intersects = raycaster.intersectObjects(planetMeshes, true)
+        //if (intersects.length > 0) {
+          //const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
+          //handleHoverChange(label, meta)
+        //} else {
+          //handleHoverChange(null, null)
+        //}
         if (intersects.length > 0) {
-          const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
-          handleHoverChange(label, meta)
-        } else {
-          handleHoverChange(null, null)
-        }
+          let obj: THREE.Object3D | null = intersects[0].object
+          
+          // userData.meta を持っている親を探す
+          while (obj && !obj.userData?.meta) {
+            obj = obj.parent
+          }
+
+          if (obj && obj.userData?.meta) {
+            const { label, meta } = obj.userData as {
+              label: string
+              meta: PlanetMeta
+          }
+           handleHoverChange(label, meta)
+          } else {
+            handleHoverChange(null, null)
+          }
+          } else {
+            handleHoverChange(null, null)
+          }
+
         pointerDirty = false
       }
 
@@ -449,14 +624,17 @@ export const Home = () => {
         const angle = time * 0.25 + planet.offset
         const cosAngle = Math.cos(angle)
         const sinAngle = Math.sin(angle)
-        planet.mesh.position.set(cosAngle * radius, Math.sin(time * 0.6 + planet.offset) * 2, sinAngle * radius)
-        planet.glow.position.copy(planet.mesh.position)
-        tempVector.copy(planet.mesh.position)
+        planet.object.position.set(cosAngle * radius, Math.sin(time * 0.6 + planet.offset) * 2, sinAngle * radius)
+        //planet.glow.position.copy(planet.object.position)
+        if (planet.label === "お問い合わせ" && planetModel) {
+          planet.object.lookAt(planetModel.position)
+        }
+        tempVector.copy(planet.object.position)
         tempVector.y += LABEL_HEIGHT_OFFSET + Math.sin(time * 2 + planet.offset) * LABEL_FLOAT_AMPLITUDE
         planet.labelSprite.position.copy(tempVector)
         const isHovered = hoveredPlanetRef.current === planet.label
-        planet.glowMaterial.opacity = isHovered ? 0.6 : 0.3
-        planet.mesh.scale.setScalar(isHovered ? 1.15 : 1)
+        //planet.glowMaterial.opacity = isHovered ? 0.6 : 0.3
+        planet.object.scale.setScalar(isHovered ? 1.15 : 1)
         planet.labelMaterial.opacity = isHovered ? 1 : 0
         planet.labelSprite.visible = isHovered
         const labelScale = isHovered ? 1.1 : 0.8
@@ -465,7 +643,7 @@ export const Home = () => {
 
       stars.rotation.y += 0.0001
 
-      const targetZ = 15 - zoomLevelRef.current * 12
+      const targetZ = 40 - zoomLevelRef.current * 30
       camera.position.z += (targetZ - camera.position.z) * 0.08
 
       if (zoomLevelRef.current > 0.95 && !transitionRef.current) {
