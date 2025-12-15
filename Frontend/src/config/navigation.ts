@@ -10,5 +10,9 @@ export const siteNavigation: NavItem[] = [
   { label: "ニュース", to: "/news" },
   { label: "成果物投稿", to: "/submission" },
   { label: "カレンダー", to: "/calendar" },
+  {
+    label: "ChatBot",
+    to: "https://huggingface.co/spaces/kotaroutakasugi/lab-chatbot-up",
+  },
 ]
 
