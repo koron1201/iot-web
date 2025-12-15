@@ -902,7 +902,7 @@ moon.scale.set(0.3, 0.3, 0.3)
 
           <main className="mt-auto px-6 pb-12 lg:px-16">
             {activeInfoKey && (
-              <div className="relative rounded-[32px] border border-white/15 bg-black/30 p-8 text-sm text-cyan-100/80 backdrop-blur">
+              <div className="relative w-full max-w-3xl rounded-[32px] border border-white/15 bg-black/30 p-8 text-sm text-cyan-100/80 backdrop-blur md:absolute md:right-8 md:top-1/2 md:max-w-[360px] md:-translate-y-1/2 lg:right-16">
                 <button
                   type="button"
                   className="absolute right-4 top-4 rounded-full border border-white/20 px-3 py-1 text-xs text-white hover:bg-white/10"
