@@ -156,6 +156,20 @@ const createSunFlareSprite = () => {
   return sprite
 }
 
+const createGlowMesh = (radius: number, color: number) => {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 32, 32),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.BackSide,
+      depthWrite: false,
+    })
+  )
+}
+
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
@@ -198,6 +212,11 @@ export const Home = () => {
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1000)
     camera.position.z = 40
+
+    // --- 衛星グループ（先に作る！）---
+    const satelliteGroup = new THREE.Group()
+    scene.add(satelliteGroup)
+
 
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -294,6 +313,73 @@ export const Home = () => {
     const loader = new GLTFLoader()
     let planetModel: THREE.Group | null = null
 
+    // --- 土星風 衛星 ---
+const saturn = new THREE.Group()
+
+const saturnBody = new THREE.Mesh(
+  new THREE.SphereGeometry(2.2, 32, 32),
+  new THREE.MeshStandardMaterial({
+    color: 0xd8c8a0,
+    roughness: 0.9,
+    metalness: 0.05,
+  })
+)
+
+const saturnRing = new THREE.Mesh(
+  new THREE.RingGeometry(7.0, 4.5, 64),
+  new THREE.MeshBasicMaterial({
+    color: 0xbfae8a,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide,
+  })
+)
+
+saturnRing.rotation.x = Math.PI / 2.2
+
+saturn.add(saturnBody)
+saturn.add(saturnRing)
+
+// ☀ 土星用：小さい太陽フレア
+const saturnFlare = createSunFlareSprite()
+saturnFlare.scale.set(10, 10, 1)      // ← 小さい太陽
+saturnFlare.material.opacity = 0.35  // ← 弱め
+saturn.add(saturnFlare)
+
+
+
+
+// 左側・中距離
+saturn.position.set(25, -8, -22)
+satelliteGroup.add(saturn)
+saturn.scale.set(0.5, 0.5, 0.5)
+
+
+
+// --- 丸い衛星 ---
+const moon = new THREE.Mesh(
+  new THREE.SphereGeometry(1.6, 32, 32),
+  new THREE.MeshStandardMaterial({
+    color: 0x9aa0a6,
+    roughness: 1.0,
+    metalness: 0.0,
+  })
+)
+
+// ☀ 惑星用：さらに小さい太陽フレア
+const moonFlare = createSunFlareSprite()
+moonFlare.scale.set(7, 7, 1)
+moonFlare.material.opacity = 0.3
+moon.add(moonFlare)
+
+
+
+moon.position.set(17, -11, -22)
+satelliteGroup.add(moon)
+moon.scale.set(0.3, 0.3, 0.3)
+
+
+
     loader.load(
       '/3.glb', 
       (gltf:GLTF) => {
@@ -334,6 +420,7 @@ export const Home = () => {
     const rimLight = new THREE.DirectionalLight(0xffffff, 1.4)
     rimLight.position.set(-4, 6, -8)
     scene.add(rimLight)
+
 
     //fillLight1.position.set(-5, 5, 5)
     //scene.add(fillLight1)
