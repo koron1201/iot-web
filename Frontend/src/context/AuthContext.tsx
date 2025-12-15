@@ -1,39 +1,115 @@
-import React, { createContext, useContext, useMemo, useState } from "react"
-import { verifyCredentials } from "@/lib/auth"
+// ★ 修正: 不要な 'React' のインポートを削除
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 
-type AuthContextValue = {
-  isAuthenticated: boolean
-  login: (id: string, password: string) => boolean
-  logout: () => void
+// APIから返ってくるトークンの型
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
 }
 
-const AuthContext = createContext<AuthContextValue>({
-  isAuthenticated: false,
-  login: () => false,
-  logout: () => {},
-})
+// APIから返ってくるユーザー情報の型
+interface User {
+  id: number;
+  username: string;
+  is_active: boolean;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+// Contextで管理する値の型
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean; 
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+}
 
-  const login = (id: string, password: string) => {
-    const ok = verifyCredentials(id, password)
-    setIsAuthenticated(ok)
-    return ok
-  }
+// 1. Contextの作成
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// 2. AuthProviderコンポーネント
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isAuthenticated = !!user; 
+
+  const API_URL = "http://localhost:8000/auth";
+
+  // 3. ログイン処理
+  const login = async (username: string, password: string) => {
+    const params = new URLSearchParams();
+    params.append('username', username);
+    params.append('password', password);
+
+    const response = await fetch(`${API_URL}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+    });
+
+    if (!response.ok) {
+      throw new Error('ユーザー名またはパスワードが間違っています。');
+    }
+
+    const data: TokenResponse = await response.json();
+    setToken(data.access_token);
+    localStorage.setItem('token', data.access_token);
+
+    await fetchUser(data.access_token);
+  };
+
+  // 5. ログアウト処理
   const logout = () => {
-    setIsAuthenticated(false)
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+  };
+
+  // 6. ユーザー情報取得
+  const fetchUser = async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch user');
+      const userData: User = await response.json();
+      setUser(userData);
+    } catch (error) {
+      logout();
+    }
+  };
+
+  // 7. 起動時のユーザー確認
+  useEffect(() => {
+    const checkUser = async () => {
+      if (token) {
+        await fetchUser(token);
+      }
+      setIsLoading(false);
+    };
+    checkUser();
+  }, [token]);
+
+  // 認証確認中
+  if (isLoading) {
+    return null;
   }
 
-  const value = useMemo(
-    () => ({ isAuthenticated, login, logout }),
-    [isAuthenticated]
-  )
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAuthenticated }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export const useAuth = () => useContext(AuthContext)
-
-
+// 8. useAuthフック
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

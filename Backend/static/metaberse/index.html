@@ -56,11 +56,11 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/WebGL Build2.loader.js";
+      var loaderUrl = buildUrl + "/WebGL Build5.loader.js";
       var config = {
-        dataUrl: buildUrl + "/WebGL Build2.data.gz",
-        frameworkUrl: buildUrl + "/WebGL Build2.framework.js.gz",
-        codeUrl: buildUrl + "/WebGL Build2.wasm.gz",
+        dataUrl: buildUrl + "/WebGL Build5.data.gz",
+        frameworkUrl: buildUrl + "/WebGL Build5.framework.js.gz",
+        codeUrl: buildUrl + "/WebGL Build5.wasm.gz",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Akiyama-Lab",
@@ -117,5 +117,21 @@
       };
       document.body.appendChild(script);
     </script>
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 100;">
+      <button onclick="window.location.href='http://localhost:5173/'" 
+              style="background-color: #4CAF50; /* Green */
+                     border: none;
+                     color: white;
+                     padding: 15px 32px;
+                     text-align: center;
+                     text-decoration: none;
+                     display: inline-block;
+                     font-size: 16px;
+                     margin: 4px 2px;
+                     cursor: pointer;
+                     border-radius: 8px;">
+        ホーム画面に戻る
+      </button>
+    </div>
   </body>
 </html>

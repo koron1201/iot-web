@@ -1,11 +1,19 @@
 import { NavLink } from "react-router-dom"
-import {motion } from "framer-motion"
-import { PageQuickNav } from "@/components/PageQuickNav"
+import { motion } from "framer-motion"
+import { siteNavigation } from "@/config/navigation"
+import { cn } from "@/lib/utils"
 
 const containerVariants = {
   hidden:{},
   show:{transition:{staggerChildren: 0.05}},
-  };
+};
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
+    "text-sky-200/80 hover:text-white hover:bg-white/5",
+    isActive ? "text-white bg-white/10" : ""
+  )
 
 {/*星*/}
 export const About: React.FC = () => {
@@ -44,9 +52,16 @@ export const About: React.FC = () => {
       exit={{ y: "100%", opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     > 
-      <PageQuickNav/> 
-      
-      
+      <nav className="mt-4 w-full rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40 lg:w-auto">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
+            <NavLink key={item.to} to={item.to} className={navLinkClass}>
+              <span>{item.label}</span>
+              <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
+            </NavLink>
+          ))}
+        </div>
+      </nav>
 
       <div className="container py-12">
       {/* 見出し */}
@@ -106,9 +121,6 @@ export const About: React.FC = () => {
           <p className="font-medium text-white">秋山 康智（Akiyama Koji）</p>
           <p className="text-cyan-100/80 mt-2">
             専門分野：IoTシステム、組込みソフトウェア、情報ネットワーク
-          </p>
-          <p className="text-cyan-100/80 mt-2">
-            「自ら考え、試行錯誤を重ねながら新しい価値を創造できるエンジニアを育成します。」
           </p>
         </div>
       </section>
