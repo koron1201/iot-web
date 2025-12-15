@@ -1,6 +1,9 @@
 import { PageQuickNav } from "@/components/PageQuickNav"
 import {motion } from "framer-motion"
 import {useState, useEffect } from "react";
+import { siteNavigation } from "@/config/navigation"
+import { NavLink } from "react-router-dom"
+import { cn } from "@/lib/utils"
 
 //{/*研究データの型の定義*/}
 interface ResearchProps{
@@ -9,6 +12,13 @@ interface ResearchProps{
   title: string
   description: string
 }
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
+    "text-sky-200/80 hover:text-white hover:bg-white/5",
+    isActive ? "text-white bg-white/10" : ""
+)
 
 export const Research: React.FC = () => {
   //FastAPIから取得
@@ -68,12 +78,26 @@ export const Research: React.FC = () => {
       exit={{ y: "100%", opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}//時間
       >
-      {/*ナビゲーション*/} 
-      <PageQuickNav/> 
+      {/* ナビゲーション */}
+      <nav className="mt-4 w-full rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40 lg:w-auto">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={navLinkClass}
+              >
+              <span>{item.label}</span>
+              <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
 
       {/* コンテンツ */}
       <div style={{ position: "relative", zIndex: 10, padding: "3rem", color: "white"}}>{/*位置、背景より前に、余白、文字の色*/}
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-white">研究内容</h1>{/*tracking-tight:文字間隔を狭く、sm:画面サイズが小のとき*/}
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-white -mt-5">研究内容</h1>{/*tracking-tight:文字間隔を狭く、sm:画面サイズが小のとき*/}
         <div style={{ display: "grid", gap: "2.0rem", gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))", marginTop: "2.0rem" }}>{/*並び方を自動調整、カード同士の間隔*/}
           {researchList.map((item, index) => ( //研究データを一つづつ取り出す
             <motion.div//研究カードのアニメーション
