@@ -8,6 +8,7 @@ import RootLayout from "@/routes/RootLayout"
 import { About } from "@/routes/about"
 import { Contact } from "@/routes/contact"
 import { Home } from "@/routes/home"
+import { WelcomeLoader } from "@/routes/WelcomeLoader"
 import { Members } from "@/routes/members"
 import { News } from "@/routes/news"
 import { Research } from "@/routes/research"
@@ -22,7 +23,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />, 
     children: [
-      { index: true, element: <Home /> },
+      { index: true, element: <WelcomeLoader /> },
       { path: "about", element: <About /> },
       { path: "research", element: <Research /> },
       { path: "members", element: <Members /> },
