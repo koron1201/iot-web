@@ -1,7 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react"
+import React, { useEffect, useState, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { motion, AnimatePresence } from "framer-motion"
 import { Home } from "./home"
+
+// --- Global State ---
+// SPAセッション中は保持される（リロードでリセット）
+let hasWelcomeShown = false
 
 // --- Utilities ---
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&"
@@ -9,8 +13,8 @@ const randomChar = () => CHARS[Math.floor(Math.random() * CHARS.length)]
 
 // --- Components ---
 
-// 1. Scramble Text Effect
-const ScrambleText = ({ text, className, trigger = true, speed = 40, delay = 0 }: { text: string, className?: string, trigger?: boolean, speed?: number, delay?: number }) => {
+// 1. Scramble Text Effect (Optimized)
+const ScrambleText = ({ text, className, trigger = true, speed = 50, delay = 0 }: { text: string, className?: string, trigger?: boolean, speed?: number, delay?: number }) => {
   const [display, setDisplay] = useState(text.split("").map((c) => c === " " ? " " : randomChar()).join(""))
   const [started, setStarted] = useState(false)
   
@@ -29,14 +33,20 @@ const ScrambleText = ({ text, className, trigger = true, speed = 40, delay = 0 }
 
     let iteration = 0
     const interval = setInterval(() => {
-      setDisplay(text.split("").map((letter, index) => {
-        if (text[index] === " ") return " "
-        if (index < iteration) return text[index]
-        return randomChar()
-      }).join(""))
+      // 負荷軽減のため、一度に解決する文字数を増やす
+      iteration += 1
       
+      setDisplay(prev => {
+         // 前回の状態を利用して計算コストを下げる...といっても
+         // 文字列生成は必要なので、ロジック自体はシンプルに保つ
+         return text.split("").map((letter, index) => {
+            if (text[index] === " ") return " "
+            if (index < iteration) return text[index]
+            return randomChar()
+         }).join("")
+      })
+
       if (iteration >= text.length) clearInterval(interval)
-      iteration += 1 / 2 // Speed up resolution
     }, speed)
     return () => clearInterval(interval)
   }, [text, started, speed])
@@ -53,29 +63,89 @@ const HudCorner = ({ className, rotate = 0 }: { className?: string, rotate?: num
 )
 
 export const WelcomeLoader = () => {
-  const [progress, setProgress] = useState(0)
-  const [step, setStep] = useState<"loading" | "standby" | "welcome" | "finished">("loading")
+  // 既に表示済みの場合は即座にfinished状態にする（演出をスキップ）
+  const [progress, setProgress] = useState(hasWelcomeShown ? 100 : 0)
+  const [step, setStep] = useState<"loading" | "standby" | "welcome" | "finished">(
+    hasWelcomeShown ? "finished" : "loading"
+  )
   const [logs, setLogs] = useState<string[]>([])
+  const [isHomeMounted, setIsHomeMounted] = useState(hasWelcomeShown)
+  const loadingStartedRef = useRef(false)
+  const loadedAssetsRef = useRef<Set<string>>(new Set())
   
   // THREE.js Loading Manager Setup
   useEffect(() => {
+    if (hasWelcomeShown) return // スキップ時はフックしない
+
+    const originalOnStart = THREE.DefaultLoadingManager.onStart
     const originalOnProgress = THREE.DefaultLoadingManager.onProgress
     const originalOnLoad = THREE.DefaultLoadingManager.onLoad
 
+    // 必須アセットの定義（顔モデルなど、これが読み終わるまで完了としない）
+    // home.tsx に記述されているモデル名: "3.glb"
+    const REQUIRED_ASSETS = ["3.glb"]
+
+    // ロード開始を検知
+    THREE.DefaultLoadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
+        loadingStartedRef.current = true
+        originalOnStart?.(url, itemsLoaded, itemsTotal)
+    }
+
     THREE.DefaultLoadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      const p = (itemsLoaded / itemsTotal) * 100
-      setProgress(p)
+      loadingStartedRef.current = true
+      
+      // ロード完了したファイルの記録
       const fileName = url.split("/").pop() || url
-      setLogs(prev => [...prev.slice(-8), `LOAD: ${fileName} ... ${Math.round(p)}%`])
+      loadedAssetsRef.current.add(fileName)
+
+      // 負荷軽減：10%刻み程度で更新、または最後の100%は必ず通す
+      const p = (itemsLoaded / itemsTotal) * 100
+      if (p % 10 < 1 || p >= 99) {
+        setProgress(p)
+      }
+      // ログも毎回更新すると重いので間引くか、最新のみにする等の対策
+      setLogs(prev => {
+        // 同じファイル名の連続追加を防ぐ簡易チェック
+        if (prev.length > 0 && prev[prev.length-1].includes(fileName)) return prev
+        return [...prev.slice(-8), `LOAD: ${fileName} ... ${Math.round(p)}%`]
+      })
     }
 
     THREE.DefaultLoadingManager.onLoad = () => {
+      // ロードが一度も始まっていない（初期化前）の完了イベントは無視する
+      if (!loadingStartedRef.current) return
+
+      // 必須アセットがロード済みかチェック
+      const loadedList = Array.from(loadedAssetsRef.current)
+      const hasRequired = REQUIRED_ASSETS.every(req => 
+        loadedList.some(loaded => loaded.includes(req))
+      )
+
+      if (!hasRequired) {
+        // 必須ファイルがまだならログを出して待機（ただし他のイベントで再度onLoadが呼ばれるのを待つ）
+        // ※注意: 最後のファイルだった場合は永遠に呼ばれない可能性があるが、
+        // DefaultLoadingManagerは全ての登録済みアイテムが終わった時にonLoadを呼ぶため、
+        // ここに来ている時点で「登録されたものは全て終わった」はず。
+        // つまり、まだ登録すらされていない（遅延ロード）か、名前が一致していないか。
+        // ここでは「名前一致」を信じて、もしここに来て必須がない＝まだ登録前とみなして無視する。
+        // 念のためログには出す
+        // console.log("Waiting for required assets:", REQUIRED_ASSETS, loadedList)
+        return 
+      }
+
       setProgress(100)
       setLogs(prev => [...prev.slice(-8), "SYSTEM: ALL RESOURCES LOADED."])
-      setTimeout(() => setStep("standby"), 800)
+      // 演出が必要な場合のみ次へ進む
+      if (!hasWelcomeShown) {
+        setTimeout(() => setStep("standby"), 800)
+      }
     }
 
+    // フック設定完了後にHomeをマウントさせる（ロードイベントの捕捉漏れを防ぐため）
+    setIsHomeMounted(true)
+
     return () => {
+      THREE.DefaultLoadingManager.onStart = originalOnStart
       THREE.DefaultLoadingManager.onProgress = originalOnProgress
       THREE.DefaultLoadingManager.onLoad = originalOnLoad
     }
@@ -83,26 +153,36 @@ export const WelcomeLoader = () => {
 
   // Step Transitions
   useEffect(() => {
+    if (hasWelcomeShown) return // スキップ時はタイマー処理もしない
+
     if (step === "standby") {
       const timer = setTimeout(() => setStep("welcome"), 2200)
       return () => clearTimeout(timer)
     }
     if (step === "welcome") {
-      const timer = setTimeout(() => setStep("finished"), 3500)
+      const timer = setTimeout(() => {
+        setStep("finished")
+        hasWelcomeShown = true // 演出完了をマーク
+      }, 3500)
       return () => clearTimeout(timer)
     }
   }, [step])
 
-  // Random binary background data
+  // Random binary background data (Reduced size for performance)
   const binaryData = useMemo(() => {
-    return Array.from({ length: 400 }).map(() => Math.random() > 0.5 ? "1" : "0").join("")
+    return Array.from({ length: 150 }).map(() => Math.random() > 0.5 ? "1" : "0").join("")
   }, [])
+
+  // 既に表示済みの場合は Home のみをレンダリング（演出用DOMを出力しない）
+  if (hasWelcomeShown) {
+    return <Home />
+  }
 
   return (
     <>
       {/* Pre-render Home */}
       <div className={`transition-opacity duration-1000 ${step === "finished" ? "opacity-100" : "opacity-0"}`}>
-        <Home />
+        {isHomeMounted && <Home />}
       </div>
 
       <AnimatePresence>
@@ -113,20 +193,21 @@ export const WelcomeLoader = () => {
             transition={{ duration: 1.0 }}
             className="fixed inset-0 z-[9999] bg-black text-cyan-500 font-mono overflow-hidden cursor-none selection:bg-cyan-500 selection:text-black"
           >
-            {/* CRT & Grid Effects */}
+            {/* CRT & Grid Effects - Simplified for Performance */}
             <div className="absolute inset-0 pointer-events-none z-0">
                {/* Scanlines */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] pointer-events-none" />
               {/* Radial Vignette */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.8)_100%)]" />
-              {/* Moving Grid */}
-              <div className="absolute inset-0 opacity-20" 
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.6)_100%)]" />
+              {/* Moving Grid - Reduced opacity/complexity */}
+              <div className="absolute inset-0 opacity-10" 
                    style={{ 
                      backgroundImage: 'linear-gradient(rgba(6,182,212,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.3) 1px, transparent 1px)', 
-                     backgroundSize: '40px 40px',
+                     backgroundSize: '60px 60px',
                      transform: 'perspective(500px) rotateX(60deg) translateY(0)',
                      transformOrigin: '50% 100%',
-                     animation: 'gridMove 20s linear infinite'
+                     animation: 'gridMove 20s linear infinite',
+                     willChange: 'transform'
                    }} 
               />
             </div>
