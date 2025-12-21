@@ -62,8 +62,8 @@ def create_submission(
     title: str = Form(...),
     subtitle: str = Form(...),
     description: str = Form(...), 
-    file: UploadFile = File(""), #空でOK
-    thumbnail_file: UploadFile = File("") #空でOK
+    file: UploadFile = File(...), 
+    thumbnail_file: UploadFile = File(...) 
 ):
     # 1. 最初にデータベースに提出エントリを作成し、IDを取得
     # フォームデータから送信データを作成
