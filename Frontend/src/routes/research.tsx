@@ -1,9 +1,7 @@
-import { PageQuickNav } from "@/components/PageQuickNav"
 import {motion } from "framer-motion"
 import {useState, useEffect } from "react";
-import { siteNavigation } from "@/config/navigation"
-import { NavLink } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 
 //{/*研究データの型の定義*/}
 interface ResearchProps{
@@ -12,13 +10,6 @@ interface ResearchProps{
   title: string
   description: string
 }
-
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
-    "text-sky-200/80 hover:text-white hover:bg-white/5",
-    isActive ? "text-white bg-white/10" : ""
-)
 
 export const Research: React.FC = () => {
   //FastAPIから取得
@@ -79,20 +70,7 @@ export const Research: React.FC = () => {
       transition={{ duration: 0.8, ease: "easeOut" }}//時間
       >
       {/* ナビゲーション */}
-      <nav className="mt-4 w-full rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40 lg:w-auto">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={navLinkClass}
-              >
-              <span>{item.label}</span>
-              <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      <CosmicNavbar />
 
 
       {/* コンテンツ */}

@@ -6,6 +6,7 @@ export type SubmissionProject = {
   rarity: number
   tags?: string[]
   file_path?: string
+  thumbnail_path?: string
 }
 
 export type Scene3DProps = {
@@ -17,5 +18,6 @@ export type Scene3DProps = {
 export type ProjectModalProps = {
   project: SubmissionProject | null
   onClose: () => void
+  onLaunch?: () => void
 }
 

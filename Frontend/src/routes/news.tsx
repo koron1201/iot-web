@@ -1,9 +1,8 @@
 import React, { useState } from "react"
-import { NavLink } from "react-router-dom"
 import { newsItems } from "@/data/news"
 import type { NewsItem } from "@/data/news"
-import { siteNavigation } from "@/config/navigation"
 import { cn } from "@/lib/utils"
+import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 
 // カテゴリ別のバッジスタイル
 const getCategoryBadge = (category: string) => {
@@ -18,13 +17,6 @@ const getCategoryBadge = (category: string) => {
       return "bg-gradient-to-r from-indigo-500/20 to-purple-500/10 text-indigo-100 border border-indigo-400/40"
   }
 }
-
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
-    "text-sky-200/80 hover:text-white hover:bg-white/5",
-    isActive ? "text-white bg-white/10" : ""
-  )
 
 //Modalコンポーネントの定義
 interface ModalProps {
@@ -109,16 +101,7 @@ export const News: React.FC = () => {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 py-12 md:px-6 lg:px-8">
         {/* ページタイトル */}
-        <nav className="mt-4 w-full rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
-              <NavLink key={item.to} to={item.to} className={navLinkClass}>
-                <span>{item.label}</span>
-                <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
-              </NavLink>
-            ))}
-          </div>
-        </nav>
+        <CosmicNavbar />
         <div className="flex items-center gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.45em] text-cyan-200/70">Latest Updates</p>

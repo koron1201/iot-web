@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom"
 import * as THREE from "three"
 import {GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-import { siteNavigation } from "@/config/navigation"
+import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 import { newsItems } from "@/data/news"
 import type { NewsItem as SharedNewsItem } from "@/data/news"
 import { cn } from "@/lib/utils"
@@ -169,14 +169,6 @@ const createGlowMesh = (radius: number, color: number) => {
   )
 }
 
-
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
-    "text-cyan-200/80 hover:text-white hover:bg-white/10",
-    isActive ? "text-white bg-white/10" : ""
-  )
-
 export const Home = () => {
   const navigate = useNavigate()
 
@@ -277,11 +269,11 @@ export const Home = () => {
     // --- 炎スプライト/パーティクル ---
     //const flameSprites: THREE.Sprite[] = []
     //for (let i = 0; i < 5; i++) {
-      //const sprite = createSunFlareSprite() // 必要なら赤～オレンジ系に色変更
-      //sprite.scale.set(15 + i * 5, 15 + i * 5, 1)
-      //sprite.position.copy(sun.position)
-      //scene.add(sprite)
-      //flameSprites.push(sprite)
+    //  //const sprite = createSunFlareSprite() // 必要なら赤～オレンジ系に色変更
+    //  //sprite.scale.set(15 + i * 5, 15 + i * 5, 1)
+    //  //sprite.position.copy(sun.position)
+    //  //scene.add(sprite)
+    //  //flameSprites.push(sprite)
     //}
 
     // 赤系 PointLight
@@ -677,10 +669,10 @@ moon.scale.set(0.3, 0.3, 0.3)
         raycaster.setFromCamera(mouse, camera)
         const intersects = raycaster.intersectObjects(planetMeshes, true)
         //if (intersects.length > 0) {
-          //const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
-          //handleHoverChange(label, meta)
+        //  //const { label, meta } = intersects[0].object.userData as { label: string; meta: PlanetMeta }
+        //  //handleHoverChange(label, meta)
         //} else {
-          //handleHoverChange(null, null)
+        //  //handleHoverChange(null, null)
         //}
         if (intersects.length > 0) {
           let obj: THREE.Object3D | null = intersects[0].object
@@ -877,8 +869,9 @@ moon.scale.set(0.3, 0.3, 0.3)
 
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.15),transparent_60%)]" />
 
-        <div className="relative z-10 flex min-h-screen flex-col">
-          <header className="flex flex-col gap-6 px-6 pt-10 lg:flex-row lg:items-start lg:justify-between lg:px-16">
+        <div className="relative z-10 flex min-h-screen flex-col pt-24">
+          <CosmicNavbar />
+          <header className="flex flex-col gap-6 px-6 lg:flex-row lg:items-start lg:justify-between lg:px-16">
             <div className="max-w-2xl space-y-4">
               <p className="text-sm uppercase tracking-[0.5em] text-cyan-200/70">IoT Solutions Lab</p>
               <h1 className="text-4xl font-semibold leading-tight text-white drop-shadow-[0_0_25px_rgba(14,165,233,0.4)] sm:text-5xl">
@@ -888,16 +881,6 @@ moon.scale.set(0.3, 0.3, 0.3)
                 東京電機大学のスマートICTソリューション研究室では、IoT・組込みソフトウェア・人工知能・デジタルツインなどの最先端技術を活用し、社会課題に挑む研究を行っています。
               </p>
             </div>
-            <nav className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-md lg:w-auto">
-              <div className="flex flex-wrap items-center justify-center gap-2">
-            {siteNavigation.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navLinkClass}>
-                <span>{item.label}</span>
-                <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
-              </NavLink>
-            ))}
-              </div>
-            </nav>
           </header>
 
           <main className="mt-auto px-6 pb-12 lg:px-16">
@@ -940,5 +923,3 @@ moon.scale.set(0.3, 0.3, 0.3)
 }
 
 export default Home
-
-

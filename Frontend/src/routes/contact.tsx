@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Card } from '../components/ui/card'
+import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 
 export const Contact: React.FC = () => {
   const [mail, setMail] = useState('')
@@ -54,6 +55,8 @@ export const Contact: React.FC = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(96,165,250,0.25),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(236,72,153,0.18),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(14,165,233,0.22),transparent_32%)]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.0)_18%,rgba(255,255,255,0.06)_32%,rgba(255,255,255,0.0)_60%,rgba(255,255,255,0.05)_78%,rgba(255,255,255,0.0)_100%)] opacity-60" />
 
+      <CosmicNavbar />
+
       <div className="relative container py-12 max-w-3xl mx-auto text-white">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
@@ -66,14 +69,6 @@ export const Contact: React.FC = () => {
               </h1>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            onClick={() => navigate('/')}
-            className="border-white/40 text-white bg-white/10 hover:bg-white/20"
-          >
-            ホームに戻る
-          </Button>
         </div>
 
         <div className="mb-6 grid gap-4 sm:grid-cols-2">

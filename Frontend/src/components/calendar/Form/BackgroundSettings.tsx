@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface CalendarEvent {
   id: string;
@@ -43,12 +43,29 @@ const BackgroundSettings: React.FC<BackgroundSettingsProps> = ({
   onBulkDelete,
 }) => {
   const [selectedColor, setSelectedColor] = useState(BG_COLORS[0].color);
+  
+  // 日数計算
+  const [dayCount, setDayCount] = useState(0);
 
   const backgroundEvents = events.filter(
     (e) =>
       e.display === "background" ||
       BG_COLORS.some((bg) => bg.color === e.color)
   );
+
+  useEffect(() => {
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const diffTime = Math.abs(e.getTime() - s.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        setDayCount(diffDays + 1);
+    } else {
+        setDayCount(0);
+    }
+  }, [startDate, endDate]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,54 +78,47 @@ const BackgroundSettings: React.FC<BackgroundSettingsProps> = ({
     onAdd(startDate, endDate, selectedColor, titleToSave);
   };
 
+  // ★ 修正: タイトルを動的に変更 (1日より多いときのみ「一括登録」)
+  const displayCount = multiSelectCount > 0 ? multiSelectCount : dayCount;
+  const formTitle = displayCount > 1 ? `${displayCount}日分を一括登録` : "背景設定";
+
   return (
-    <div className="flex flex-col h-full bg-gray-50 p-4 rounded-lg shadow-inner">
+    <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">📅 背景設定</h2>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-          ✕ 閉じる
-        </button>
+        <h2 className="text-xl font-bold text-gray-800">{formTitle}</h2>
       </div>
 
       {/* --- 新規追加フォーム --- */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <h3 className="font-bold text-sm text-gray-600 mb-3">新しい背景を追加</h3>
+      <form onSubmit={handleAdd} className="flex flex-col gap-6 mb-6">
         
-        {multiSelectCount > 0 ? (
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 p-3 rounded text-sm text-center mb-4">
-                <strong>{multiSelectCount}</strong> 日分の日付が選択されています
-            </div>
-        ) : (
-            <>
-                <p className="text-xs text-gray-400 mb-2">カレンダーをドラッグまたはShift+クリックで日付を選択</p>
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div>
-                    <label className="text-xs text-gray-500">開始日</label>
+        <div className="flex flex-col">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm text-gray-600">開始日</label>
                     <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full border rounded p-1 text-sm"
+                        className="border rounded p-2 text-gray-700 bg-white"
                         required={multiSelectCount === 0}
                     />
-                    </div>
-                    <div>
-                    <label className="text-xs text-gray-500">終了日</label>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm text-gray-600">終了日</label>
                     <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full border rounded p-1 text-sm"
+                        className="border rounded p-2 text-gray-700 bg-white"
                         required={multiSelectCount === 0}
                     />
-                    </div>
                 </div>
-            </>
-        )}
+            </div>
+        </div>
 
-        <form onSubmit={handleAdd} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <label className="text-xs text-gray-500 mb-2 block">色を選択</label>
+            <label className="font-bold text-gray-700 mb-2 block">色を選択</label>
             <div className="grid grid-cols-2 gap-2">
               {BG_COLORS.map((bg) => (
                 <button
@@ -129,28 +139,44 @@ const BackgroundSettings: React.FC<BackgroundSettingsProps> = ({
               ))}
             </div>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            className="bg-blue-500 text-white py-2 rounded text-sm font-bold hover:bg-black transition-colors"
-          >
-            {multiSelectCount > 0 ? `${multiSelectCount}日分の背景を追加` : "背景を追加"}
-          </button>
+        {/* フッターエリア */}
+        <div className="mt-auto pt-4 border-t flex flex-col gap-4">
+            
+            {/* 一括削除ボタン: 1日でも選択されていれば表示 (前回の修正を維持) */}
+            {((multiSelectCount > 0) || (dayCount > 0)) && onBulkDelete && (
+                <button
+                    type="button"
+                    onClick={onBulkDelete}
+                    className="w-full bg-red-100 text-red-600 py-2 rounded text-sm font-bold hover:bg-red-200 transition-colors border border-red-200"
+                >
+                    選択した日付の背景を削除
+                </button>
+            )}
 
-          {multiSelectCount > 0 && onBulkDelete && (
-            <button
-              type="button"
-              onClick={onBulkDelete}
-              className="bg-red-100 text-red-600 py-2 rounded text-sm font-bold hover:bg-red-200 transition-colors border border-red-200"
-            >
-              選択した日付の背景を削除
-            </button>
-          )}
-        </form>
-      </div>
+            {/* キャンセル・追加ボタン */}
+            <div className="flex justify-between gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="bg-gray-100 text-gray-600 px-4 py-2 rounded hover:bg-gray-200 transition-colors font-semibold"
+                >
+                    キャンセル
+                </button>
+
+                <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-black transition-colors font-semibold shadow-lg"
+                >
+                    {multiSelectCount > 0 ? "適用" : "追加"}
+                </button>
+            </div>
+        </div>
+      </form>
 
       {/* --- 設定済みリスト --- */}
-      <div className="flex-grow overflow-hidden flex flex-col">
+      <div className="flex-grow overflow-hidden flex flex-col border-t pt-4">
         <h3 className="font-bold text-sm text-gray-600 mb-2">設定済みの背景 ({backgroundEvents.length})</h3>
         <div className="overflow-y-auto flex-1 space-y-2 pr-1">
           {backgroundEvents.length === 0 ? (
@@ -174,7 +200,7 @@ const BackgroundSettings: React.FC<BackgroundSettingsProps> = ({
                 </div>
                 <button
                   onClick={() => onDelete(event.id)}
-                  className="text-red-500 hover:bg-blue-100 p-1 rounded transition-colors"
+                  className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors"
                   title="削除"
                 >
                   🗑️

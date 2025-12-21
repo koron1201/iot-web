@@ -1,26 +1,91 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
-
-import { NavLink } from "react-router-dom"
-import { SpaceHangarBackdrop } from "@/components/backgrounds/SpaceHangarBackdrop"
-import { Scene3D } from "@/components/submission/Scene3D"
-import { ViewportStars } from "@/components/submission/ViewportStars"
+import { motion, AnimatePresence } from "framer-motion"
+import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 import { ProjectModal } from "@/components/submission/ProjectModal"
 import type { SubmissionProject } from "@/components/submission/types"
 import { deliverables } from "@/data/deliverables"
-import { siteNavigation } from "@/config/navigation"
-import { cn } from "@/lib/utils"
+import { Background } from "@/components/submission/Background"
+import { Carousel3D } from "@/components/submission/Carousel3D"
 
 const SUBMISSION_ENDPOINT = "http://localhost:8000/submission/"
 const RARITY_PALETTE = [5, 4, 4, 3, 5, 4, 3, 5]
 
 const sanitizeFilePath = (value: string) => value.replace(/^\/+/, "")
 
-const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "group relative flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition",
-    "text-sky-200/80 hover:text-white hover:bg-white/5",
-    isActive ? "text-white bg-white/10" : ""
+// --- HUD Components ---
+
+const CornerBrackets = () => (
+  <div className="pointer-events-none absolute inset-0 z-40 overflow-hidden mix-blend-screen">
+    {/* Top Left */}
+    <div className="absolute left-4 top-4 md:left-8 md:top-8 h-8 w-8 md:h-12 md:w-12 border-l-2 border-t-2 border-cyan-500/80 rounded-tl-lg" />
+    <motion.div 
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2, repeat: Infinity }}
+      className="absolute left-4 top-4 md:left-8 md:top-8 h-1 w-1 md:h-1.5 md:w-1.5 bg-cyan-400 box-shadow-glow" 
+    />
+    
+    {/* Top Right */}
+    <div className="absolute right-4 top-4 md:right-8 md:top-8 h-8 w-8 md:h-12 md:w-12 border-r-2 border-t-2 border-cyan-500/80 rounded-tr-lg" />
+    <motion.div 
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+      className="absolute right-4 top-4 md:right-8 md:top-8 h-1 w-1 md:h-1.5 md:w-1.5 bg-cyan-400 box-shadow-glow" 
+    />
+    
+    {/* Bottom Left */}
+    <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 h-8 w-8 md:h-12 md:w-12 border-b-2 border-l-2 border-cyan-500/80 rounded-bl-lg" />
+    <motion.div 
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+      className="absolute bottom-4 left-4 md:bottom-8 md:left-8 h-1 w-1 md:h-1.5 md:w-1.5 bg-cyan-400 box-shadow-glow" 
+    />
+    
+    {/* Bottom Right */}
+    <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 h-8 w-8 md:h-12 md:w-12 border-b-2 border-r-2 border-cyan-500/80 rounded-br-lg" />
+    <motion.div 
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
+      className="absolute bottom-4 right-4 md:bottom-8 md:right-8 h-1 w-1 md:h-1.5 md:w-1.5 bg-cyan-400 box-shadow-glow" 
+    />
+  </div>
+)
+
+const TechOverlay = () => {
+  const [time, setTime] = useState(new Date())
+  
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden text-[10px] font-mono text-cyan-500/60 select-none">
+      {/* System Status - Top Left */}
+      <div className="absolute left-6 top-24 md:left-12 md:top-32 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="tracking-widest">SYSTEM: ONLINE</span>
+        </div>
+        <div className="h-[1px] w-24 bg-cyan-500/30" />
+        <div className="opacity-70">
+          <div>FPS: 60.0</div>
+          <div>MEM: OPTIMIZED</div>
+        </div>
+      </div>
+
+      {/* Coordinates - Bottom Right */}
+      <div className="absolute right-6 bottom-16 md:right-12 md:bottom-20 text-right space-y-1">
+        <div className="text-xs font-bold tracking-widest">{time.toLocaleTimeString()}</div>
+        <div className="text-[9px] opacity-70">ZONE: ARCHIVE-01</div>
+        <div className="text-[9px] opacity-70">COORD: {time.getMilliseconds().toString().padStart(3, '0')}.{time.getSeconds().toString().padStart(2, '0')}</div>
+      </div>
+
+      {/* Decorative Side Elements */}
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-16 h-64 border-r border-cyan-500/20 bg-gradient-to-r from-cyan-900/10 to-transparent hidden lg:block" />
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-16 h-64 border-l border-cyan-500/20 bg-gradient-to-l from-cyan-900/10 to-transparent hidden lg:block" />
+    </div>
   )
+}
 
 export const Submission: React.FC = () => {
   const fallbackProjects = useMemo<SubmissionProject[]>(
@@ -68,6 +133,11 @@ export const Submission: React.FC = () => {
             ? ((item as { filePath?: string }).filePath as string)
             : undefined
 
+      const thumbnailPath =
+        typeof item.thumbnail_path === "string"
+          ? item.thumbnail_path
+          : undefined
+
       return {
         id: typeof item.id === "number" ? item.id : index + 1,
         title: typeof item.title === "string" && item.title.trim().length > 0 ? item.title : `成果物 ${index + 1}`,
@@ -80,6 +150,7 @@ export const Submission: React.FC = () => {
         description,
         tags,
         file_path: filePath,
+        thumbnail_path: thumbnailPath,
       }
     }
 
@@ -129,122 +200,134 @@ export const Submission: React.FC = () => {
     if (project.file_path && typeof window !== "undefined") {
       const sanitizedPath = sanitizeFilePath(project.file_path)
       const url = `http://localhost:8000/${sanitizedPath}`
-      window.open(url, "_blank", "noopener,noreferrer")
+      // Don't auto open - let the modal handle details, or button in modal
+      // But preserving existing logic if needed:
+      // window.open(url, "_blank", "noopener,noreferrer") 
     }
   }, [])
-
-  const handleProjectSelect = useCallback((_index: number) => {}, [])
 
   const closeModal = useCallback(() => {
     setSelectedProject(null)
   }, [])
 
+  const handleLaunchProject = useCallback(() => {
+    if (selectedProject?.file_path) {
+      const sanitizedPath = sanitizeFilePath(selectedProject.file_path)
+      // 日本語ファイル名などに対応するためのURLエンコード
+      const encodedPath = sanitizedPath.split('/').map(encodeURIComponent).join('/')
+      const url = `http://localhost:8000/${encodedPath}`
+      window.open(url, "_blank", "noopener,noreferrer")
+    }
+  }, [selectedProject])
+
   if (isLoading) {
     return (
-      <>
-        <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
-          成果物を読み込み中です...
-        </div>
-      </>
+      <div className="flex h-screen w-full items-center justify-center bg-black text-sm text-cyan-500/50">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          INITIALIZING...
+        </motion.div>
+      </div>
     )
   }
 
   if (!hasDeliverables) {
     return (
-      <>
-        <div className="container mx-auto max-w-4xl space-y-6 py-12">
-          <header className="space-y-3">
-            <h1 className="text-3xl font-bold">成果物紹介</h1>
-            <p className="text-muted-foreground">
-              研究室メンバーが取り組んだ制作物をまとめています。各プロジェクトの概要をご覧いただけます。
-            </p>
+      <div className="relative min-h-screen bg-black text-white">
+        <CosmicNavbar />
+        <div className="container mx-auto flex h-screen max-w-4xl flex-col items-center justify-center space-y-6">
+          <header className="space-y-3 text-center">
+            <h1 className="text-3xl font-bold">成果物ギャラリー</h1>
+            <p className="text-muted-foreground">現在、公開できる成果物はありません。</p>
           </header>
           {fetchError && (
             <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-100">{fetchError}</div>
           )}
-          <p className="text-muted-foreground">現在、公開できる成果物はありません。</p>
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen bg-[#020417] text-white overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(59,130,246,0.2),transparent_65%)]" />
+    <div className="relative h-screen w-full overflow-hidden bg-[#000000] text-white selection:bg-cyan-500/30">
+      <Background />
+      
+      {/* HUD Elements */}
+      <CornerBrackets />
+      <TechOverlay />
+      
+      <CosmicNavbar />
 
-      <nav className="relative z-20 mx-auto mt-4 w-full max-w-6xl rounded-full border border-white/20 bg-[#0d1117]/70 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/40">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {[{ label: "ホーム", to: "/" }, ...siteNavigation].map((item) => (
-            <NavLink key={item.to} to={item.to} className={navLinkClass}>
-              <span>{item.label}</span>
-              <span className="absolute inset-0 rounded-full border border-white/30 opacity-0 transition group-hover:opacity-100" />
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-      <section className="relative min-h-screen w-full overflow-hidden">
-        <SpaceHangarBackdrop />
-
-        <div className="relative z-10 mx-auto mt-16 flex w-full max-w-6xl flex-col items-center gap-6 px-4 sm:px-8">
-          <div className="flex items-center gap-3 text-[0.6rem] uppercase tracking-[0.6em] text-cyan-100/50">
-            <span>DECK 02</span>
-            <span>ORBITAL VIEWPORT</span>
-            <span>PRESSURIZED</span>
-          </div>
-
-          <div className="relative w-full overflow-visible">
-            <div className="pointer-events-none absolute inset-x-12 top-2 h-4 rounded-full bg-gradient-to-r from-white/30 via-cyan-200/40 to-white/30 blur-md" />
-            <div className="pointer-events-none absolute inset-x-8 top-8 h-[2px] rounded-full bg-gradient-to-r from-cyan-200/40 via-white/50 to-cyan-200/40" />
-            <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-24 w-[85%] rounded-b-[80px] border border-white/15 bg-white/5 blur-3xl" />
-
-            <div className="pointer-events-none absolute -left-8 top-24 hidden h-48 w-16 rounded-[32px] border border-white/10 bg-gradient-to-b from-cyan-200/20 to-transparent blur-lg lg:block" />
-            <div className="pointer-events-none absolute -right-8 top-24 hidden h-48 w-16 rounded-[32px] border border-white/10 bg-gradient-to-b from-cyan-200/20 to-transparent blur-lg lg:block" />
-
-            <div className="relative mx-auto aspect-[16/9] w-full max-w-5xl overflow-visible">
-              <div className="absolute inset-[-40px] rounded-[220px] border-[12px] border-white/15 bg-gradient-to-b from-white/10 via-white/0 to-white/10 opacity-80 shadow-[0_40px_120px_rgba(2,8,28,0.65)]" />
-              <div className="absolute inset-[-20px] rounded-[200px] border border-cyan-100/30 opacity-70 blur-sm" />
-              <div className="absolute inset-[-4px] rounded-[190px] border border-white/30 opacity-80" />
-              <div className="relative h-full w-full overflow-hidden rounded-[180px] border border-white/10 bg-black/65 shadow-[0_35px_90px_rgba(0,0,0,0.7)] backdrop-blur-xl">
-                <div className="pointer-events-none absolute inset-0 rounded-[180px] border border-white/5 shadow-[inset_0_0_40px_rgba(255,255,255,0.25)]" />
-                <div className="pointer-events-none absolute inset-10 rounded-[140px] border border-cyan-200/15 blur" />
-                <div className="pointer-events-none absolute inset-0 rounded-[180px] bg-gradient-to-b from-white/10 via-transparent to-black/30 opacity-50" />
-                <div className="pointer-events-none absolute inset-x-[28%] bottom-6 h-2 rounded-full bg-cyan-200/70 blur-md" />
-
-                <div className="relative h-full w-full overflow-hidden">
-                  <ViewportStars />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/65 via-transparent to-black/70 opacity-50" />
-                  <div className="relative z-10 h-full w-full">
-                    <Scene3D projects={projects} onProjectClick={handleProjectClick} onProjectSelect={handleProjectSelect} />
-                  </div>
-                </div>
-              </div>
+      <main className="relative flex h-full flex-col">
+        {/* Header Section */}
+        <div className="pointer-events-none relative z-10 flex flex-col items-center pt-24 md:pt-32">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="flex flex-col items-center mix-blend-screen"
+          >
+            <div className="mb-4 flex items-center gap-4 opacity-70">
+              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-cyan-400" />
+              <p className="text-[10px] font-bold tracking-[1.2em] text-cyan-100 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]">
+                INFINITE ARCHIVES
+              </p>
+              <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-cyan-400" />
             </div>
-          </div>
+            
+            <h1 className="relative text-center text-5xl font-black tracking-tighter md:text-7xl lg:text-9xl">
+              <span className="bg-gradient-to-b from-white via-cyan-100 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(34,211,238,0.5)] filter contrast-125">
+                成果物ギャラリー
+              </span>
+              <motion.div 
+                className="absolute -inset-x-12 -inset-y-8 -z-10 bg-cyan-500/20 blur-[100px]" 
+                animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.9, 1.1, 0.9] }}
+                transition={{ duration: 6, repeat: Infinity }}
+              />
+            </h1>
+          </motion.div>
+          
+          <AnimatePresence>
+            {fetchError && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="pointer-events-auto mt-6 rounded-lg border border-red-500/30 bg-red-950/40 px-6 py-2 text-sm text-red-200 backdrop-blur-md"
+              >
+                {fetchError}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <header className="pointer-events-none absolute left-1/2 top-12 z-10 w-full max-w-3xl -translate-x-1/2 px-6 text-center">
-          <p className="text-sm uppercase tracking-[0.5em] text-cyan-200/80">Interactive Showcase</p>
-          <h1 className="mt-3 text-3xl font-bold drop-shadow-[0_0_25px_rgba(14,165,233,0.4)] md:text-4xl">
-            開封したい成果物をタップ！
-          </h1>
-          <p className="mt-4 text-base text-cyan-100/80">
-            ドラッグで回転し、正面のカードをタップすると詳しい情報が表示されます。
-          </p>
-          {fetchError && (
-            <div className="pointer-events-auto mt-6 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-xs text-yellow-100">
-              {fetchError}
+        {/* 3D Carousel Scene */}
+        <div className="relative z-10 flex-1 w-full flex items-center justify-center">
+          <Carousel3D projects={projects} onSelect={handleProjectClick} />
+        </div>
+
+        {/* Bottom Interface */}
+        <div className="pointer-events-none absolute bottom-12 left-0 right-0 z-30 flex justify-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.8 }}
+            className="group pointer-events-auto flex cursor-pointer items-center gap-3 rounded-full border border-white/5 bg-white/5 px-8 py-3 backdrop-blur-md transition-all hover:bg-white/10 hover:border-cyan-500/30"
+          >
+            <div className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-cyan-500"></span>
             </div>
-          )}
-        </header>
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-12 z-10 text-center text-sm text-cyan-100/70">
-          <span className="rounded-full border border-cyan-400/40 px-5 py-2 backdrop-blur">
-            Tip: 画面をドラッグしてカルーセルを回転できます
-          </span>
+            <span className="text-xs font-medium tracking-widest text-cyan-200/80 group-hover:text-cyan-100">
+              DRAG TO ROTATE • TAP TO ACCESS
+            </span>
+          </motion.div>
         </div>
 
-        <ProjectModal project={selectedProject} onClose={closeModal} />
-      </section>
+        <ProjectModal project={selectedProject} onClose={closeModal} onLaunch={handleLaunchProject} />
+      </main>
     </div>
   )
 }

@@ -195,6 +195,13 @@ export const Calendar: React.FC = () => {
 
   const API_URL = "http://localhost:8000/calendar/";
 
+  // モード切替時にFullCalendarの選択を解除
+  useEffect(() => {
+    if (calendarApi) {
+      calendarApi.unselect();
+    }
+  }, [isSettingsVisible, isFormVisible, calendarApi]);
+
   useEffect(() => {
     const fetchEvents = async () => {
       const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
@@ -245,19 +252,30 @@ export const Calendar: React.FC = () => {
   };
 
   const handleDeleteBackgroundsFromMultiSelect = async () => {
-    if (!token || multiSelectedDates.size === 0) return;
-    
-    const targetEvents = events.filter(event => {
-        const eventDateStr = event.start.split('T')[0];
-        return event.display === 'background' && multiSelectedDates.has(eventDateStr);
-    });
+    if (!token) return;
+
+    let targetEvents: CalendarEvent[] = [];
+
+    if (multiSelectedDates.size > 0) {
+        targetEvents = events.filter(event => {
+            const eventDateStr = event.start.split('T')[0];
+            return event.display === 'background' && multiSelectedDates.has(eventDateStr);
+        });
+    } 
+    else if (bgStartDate && bgEndDate) {
+        targetEvents = events.filter(event => {
+            if (event.display !== 'background') return false;
+            const s = event.start.split('T')[0];
+            return s >= bgStartDate && s <= bgEndDate;
+        });
+    }
 
     if (targetEvents.length === 0) {
-        alert("選択された日付に削除可能な背景設定はありません。");
+        alert("選択された範囲に削除可能な背景設定はありません。");
         return;
     }
 
-    if (!window.confirm(`選択された日付の背景 ${targetEvents.length} 件をすべて削除しますか？`)) {
+    if (!window.confirm(`選択された範囲の背景 ${targetEvents.length} 件をすべて削除しますか？`)) {
         return;
     }
 
@@ -271,7 +289,10 @@ export const Calendar: React.FC = () => {
         }
         const deletedIds = new Set(targetEvents.map(e => e.id));
         setEvents(prev => prev.filter(e => !deletedIds.has(e.id)));
-        setMultiSelectedDates(new Set()); 
+        
+        setMultiSelectedDates(new Set());
+        setBgStartDate("");
+        setBgEndDate("");
         alert("削除が完了しました。");
     } catch (error) {
         console.error("Batch delete failed:", error);
@@ -293,7 +314,17 @@ export const Calendar: React.FC = () => {
             });
         });
     } else {
-        itemsToSave.push({ start, end });
+        const current = new Date(start);
+        const endDateObj = new Date(end);
+        
+        current.setHours(0, 0, 0, 0);
+        endDateObj.setHours(0, 0, 0, 0);
+
+        while (current <= endDateObj) {
+            const dateStr = toDateString(current);
+            itemsToSave.push({ start: dateStr, end: dateStr });
+            current.setDate(current.getDate() + 1);
+        }
     }
 
     try {
@@ -390,7 +421,13 @@ export const Calendar: React.FC = () => {
     if (!user) return; 
     setIsPreviewVisible(false);
     setIsSettingsVisible(false); 
-    setMultiSelectedDates(new Set()); 
+    
+    setMultiSelectedDates(new Set());
+    setBgStartDate("");
+    setBgEndDate("");
+
+    if (calendarApi) calendarApi.unselect();
+    
     const now = new Date();
     setupFormForDate(now);
   };
@@ -412,12 +449,26 @@ export const Calendar: React.FC = () => {
             
             setMultiSelectedDates(prev => {
                const newSet = new Set<string>(prev);
+
+               if (bgStartDate && bgEndDate) {
+                   const current = new Date(bgStartDate);
+                   const end = new Date(bgEndDate);
+                   current.setHours(0,0,0,0);
+                   end.setHours(0,0,0,0);
+                   
+                   while (current <= end) {
+                       newSet.add(toDateString(current));
+                       current.setDate(current.getDate() + 1);
+                   }
+               }
+
                datesInRange.forEach(d => {
                    if (!isRangeSelection && newSet.has(d)) newSet.delete(d);
                    else newSet.add(d);
                });
                return newSet;
             });
+
             setBgStartDate("");
             setBgEndDate("");
         } else {
@@ -426,10 +477,7 @@ export const Calendar: React.FC = () => {
             endDateInclusive.setDate(endDateInclusive.getDate() - 1);
             setBgEndDate(toDateString(endDateInclusive));
             
-            const datesInRange = getDatesInRange(selectInfo.start, selectInfo.end);
-            const newSet = new Set<string>();
-            datesInRange.forEach(d => newSet.add(d));
-            setMultiSelectedDates(newSet);
+            setMultiSelectedDates(new Set());
         }
         return; 
     }
@@ -567,15 +615,12 @@ export const Calendar: React.FC = () => {
 
     if(isFormVisible) return;
     
-    // ★ 修正: イベントクリック時も、そのイベントの期間を青くハイライトする
     const { id, title, startStr, endStr, allDay, backgroundColor, extendedProps } = clickInfo.event;
     if (clickInfo.event.display === 'background') return;
 
-    // イベントの日付範囲を計算して multiSelectedDates にセット
     const start = clickInfo.event.start!;
     let endObj = clickInfo.event.end;
     if (!endObj) {
-       // 終了日がない場合（1日のみ）は翌日扱いにして範囲計算
        endObj = new Date(start);
        endObj.setDate(endObj.getDate() + 1);
     }
@@ -618,6 +663,20 @@ export const Calendar: React.FC = () => {
   const handleCloseForm = () => {
     setIsFormVisible(false);
     setFormData(undefined);
+    setMultiSelectedDates(new Set());
+    if (calendarApi) {
+        calendarApi.unselect();
+    }
+  };
+
+  const handleCloseSettings = () => {
+    setIsSettingsVisible(false);
+    setBgStartDate("");
+    setBgEndDate("");
+    setMultiSelectedDates(new Set());
+    if (calendarApi) {
+        calendarApi.unselect();
+    }
   };
 
   const handleClosePreview = () => {
@@ -732,14 +791,18 @@ export const Calendar: React.FC = () => {
     }
     setIsPreviewVisible(false);
     setIsFormVisible(false);
+    
     setMultiSelectedDates(new Set());
+    setBgStartDate("");
+    setBgEndDate("");
+
+    if (calendarApi) calendarApi.unselect();
+    
     setIsSettingsVisible(true);
   };
 
-  // プレビューイベント（通常入力モード用）
   let previewEvents: CalendarEvent[] = [];
   if (isFormVisible && formData && !formData.id) {
-      // 新規作成時
       if (multiSelectedDates.size > 0) {
           multiSelectedDates.forEach(dateStr => {
               const startD = new Date(dateStr);
@@ -770,8 +833,6 @@ export const Calendar: React.FC = () => {
       }
   }
 
-  // ★ 修正: 設定モード中、または「予定編集中（formData.idあり）」の場合は
-  // 青い背景イベント（選択ハイライト）を強制的に被せる
   const selectionEvents: CalendarEvent[] = [];
   if ((isSettingsVisible || (isFormVisible && formData?.id)) && multiSelectedDates.size > 0) {
       multiSelectedDates.forEach(dateStr => {
@@ -784,12 +845,51 @@ export const Calendar: React.FC = () => {
               start: dateStr,
               end: toDateString(endD),
               allDay: true,
-              color: "#bfdbfe", // 選択色 (bg-blue-200に相当)
+              color: "#bfdbfe", 
               display: 'background',
               is_private: false
           });
       });
   }
+
+  // ★ 共通のクラス名生成ロジック（セルとヘッダーで共用）
+  const getClassNameForDate = (date: Date) => {
+      const classes: string[] = [];
+      const dateStr = toDateString(date);
+      const holidayName = isHoliday(date); 
+      const day = date.getDay();
+
+      const hasManualBackground = events.some(e => {
+          if (e.display !== 'background') return false;
+          const eStart = e.start.split('T')[0];
+          const eEnd = e.end ? e.end.split('T')[0] : null;
+          if (eEnd && eEnd > eStart) {
+              return dateStr >= eStart && dateStr < eEnd;
+          } else {
+              return dateStr === eStart;
+          }
+      });
+
+      // 選択状態かどうか判定
+      const isBgRange = bgStartDate && bgEndDate && dateStr >= bgStartDate && dateStr <= bgEndDate;
+      const isSelected = isBgRange || multiSelectedDates.has(dateStr);
+
+      if (isSelected) {
+          classes.push("!bg-blue-200"); 
+      } else if (hasManualBackground) {
+          classes.push("bg-white");
+      } else {
+          if (holidayName) classes.push("bg-red-50");
+          else if (day === 0) classes.push("bg-red-50");
+          else if (day === 6) classes.push("bg-blue-50");
+      }
+
+      // 文字色
+      if (holidayName || day === 0) classes.push("text-red-500");
+      else if (day === 6) classes.push("text-blue-500");
+
+      return classes;
+  };
 
   const renderDayCellContent = (arg: DayCellContentArg) => {
     const holidayName = isHoliday(arg.date);
@@ -809,92 +909,100 @@ export const Calendar: React.FC = () => {
     );
   };
 
+  // ★ 修正: 選択数が > 1 の時だけ「一括登録」と表示
+  const scheduleFormTitle = formData?.id 
+    ? "予定の編集" 
+    : multiSelectedDates.size > 1 // ★ ここを > 0 から > 1 に変更
+      ? `${multiSelectedDates.size}日分を一括登録` 
+      : "予定の追加";
+
   return (
     <div className="p-4 h-screen flex flex-col relative">
 
-      {/* ============== ここからが新しいカスタムヘッダー ============== */}
+      {/* ログアウト時のみ表示される左上の「戻る」ボタン */}
+      {!user && (
+        <button 
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 z-20 text-sm font-medium border border-gray-400 bg-white hover:bg-blue-100 py-2 px-3 rounded-lg">
+          ホームに戻る
+        </button>
+      )}
+
       <div className="flex justify-between items-center mb-4 px-2">
-        {/* 左側の要素（今回は何もなし、または設定ボタンなど） */}
         <div className="w-1/3">
            {user && <button onClick={handleToggleSettings} className="text-gray-500 p-2 rounded-md hover:bg-blue-100 text-xl">⚙️</button>}
-           {user && <button onClick={handleOpenNewForm} className="text-sm font-medium border hover:bg-blue-100 text-whitehover:bg-black py-2 px-3 rounded-lg">予定を追加</button>}
+           {user && <button onClick={handleOpenNewForm} className="text-sm font-medium border border-gray-400 hover:bg-blue-100 text-whitehover:bg-black py-2 px-3 rounded-lg">予定を追加</button>}
         </div>
 
-        {/* 中央の年月表示と移動ボタン */}
         <div className="flex items-center justify-center gap-6 w-1/3">
             <button 
                 onClick={() => calendarApi?.prev()}
                 className="text-gray-400 hover:text-gray-700 text-2xl font-light"
             >
-                &lt; {/* 	<	小なり */}
+                &lt;
             </button>
-            <h2 className="text-lg font-bold text-gray-700 w-32 text-center select-none">
+            <h2 className="text-lg font-bold text-gray-700 w-36 text-center select-none">
                 {currentTitle}
             </h2>
             <button 
                 onClick={() => calendarApi?.next()}
                 className="text-gray-400 hover:text-gray-700 text-2xl font-light"
             >
-                &gt; {/* 	>	大なり */}
+                &gt;
             </button>
         </div>
 
-        {/* 右側の要素（ログインボタンなど） */}
        <div className="flex items-center justify-end gap-2 w-1/3">
-                <button onClick={() => calendarApi?.today()} className="text-sm font-medium border border-gray-300 bg-whit hover:bg-blue-100 py-2 px-3 rounded-lg">今日</button>
+                <button onClick={() => calendarApi?.today()} className="text-sm font-medium border border-gray-400 bg-whit hover:bg-blue-100 py-2 px-3 rounded-lg">今日</button>
    
-                {/* ビュー切り替えボタン */}
                 <div className="flex items-center border border-gray-300 rounded-lg text-sm">
-                     <button
-                       onClick={() => calendarApi?.changeView('dayGridMonth')}
-                       className={`font-medium py-2 px-3 rounded-l-lg transition-colors ${
-                         currentView === 'dayGridMonth'
+                      <button
+                        onClick={() => calendarApi?.changeView('dayGridMonth')}
+                        className={`font-medium py-2 px-3 rounded-l-lg transition-colors ${
+                          currentView === 'dayGridMonth'
+                            ? 'bg-blue-400 text-white'
+                            : 'bg-white text-gray-700 hover:bg-blue-100'
+                        }`}
+                     >
+                        月
+                      </button>
+                    <button
+                       onClick={() => calendarApi?.changeView('timeGridWeek')}
+                      className={`font-medium py-2 px-3 border-l border-r border-gray-400 transition-colors ${
+                         currentView === 'timeGridWeek'
                            ? 'bg-blue-400 text-white'
                            : 'bg-white text-gray-700 hover:bg-blue-100'
                        }`}
-                    >
-                      月
-                    </button>
+                     >
+                        週
+                      </button>
                     <button
-                      onClick={() => calendarApi?.changeView('timeGridWeek')}
-                     className={`font-medium py-2 px-3 border-l border-r border-gray-300 transition-colors ${
-                        currentView === 'timeGridWeek'
-                          ? 'bg-blue-400 text-white'
-                          : 'bg-white text-gray-700 hover:bg-blue-100'
+                       onClick={() => calendarApi?.changeView('timeGridDay')}
+                       className={`font-medium py-2 px-3 rounded-r-lg transition-colors ${
+                         currentView === 'timeGridDay'
+                           ? 'bg-blue-400 text-white'
+                           : 'bg-white text-gray-700 hover:bg-blue-100'
                       }`}
-                    >
-                      週
-                    </button>
-                    <button
-                      onClick={() => calendarApi?.changeView('timeGridDay')}
-                      className={`font-medium py-2 px-3 rounded-r-lg transition-colors ${
-                        currentView === 'timeGridDay'
-                          ? 'bg-blue-400 text-white'
-                          : 'bg-white text-gray-700 hover:bg-blue-100'
-                     }`}
-                    >
-                      日
-                    </button>
+                     >
+                        日
+                      </button>
                 </div>
                 <button onClick={() => {if (user) { logout() } else { navigate("/login")}}} className="text-sm font-mediumtext-gray-600 hover:text-blue-500 ml-2">{user ? "ログアウト" : "ログイン"}</button>
             </div>
       </div>
-      {/* ============== カスタムヘッダーここまで ============== */}
 
-
-      <div className="flex-grow h-full"> {/* divの高さをflex-growで確保 */}
-        <div className="h-full flex flex-row gap-8"> {/* h-fullを追加 */}
+      <div className="flex-grow h-full"> 
+        <div className="h-full flex flex-row gap-8"> 
           <div className="flex-grow">
             <FullCalendar
-              headerToolbar={false} // FullCalendarのヘッダーを非表示！
+              headerToolbar={false} 
               datesSet={(arg) => {
-                setCalendarApi(arg.view.calendar); // APIインスタンスをstateに保存
+                setCalendarApi(arg.view.calendar); 
                 setCurrentTitle(arg.view.title);
                 setCurrentView(arg.view.type);
               }}
-              // --- 以下、既存のプロパティはそのまま ---
               locale="ja"
-              eventTimeFormat={{ //
+              eventTimeFormat={{ 
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: false
@@ -906,41 +1014,15 @@ export const Calendar: React.FC = () => {
               slotDuration="00:30:00"
               selectable={true}
               events={[...events, ...previewEvents, ...selectionEvents]}
-              dayCellClassNames={(arg) => {
-                  const classes: string[] = [];
-                  const dateStr = toDateString(arg.date);
-                  const holidayName = isHoliday(arg.date); 
-                  const day = arg.date.getDay();
-
-                  const hasManualBackground = events.some(e => {
-                      if (e.display !== 'background') return false;
-                      const eStart = e.start.split('T')[0];
-                      const eEnd = e.end ? e.end.split('T')[0] : null;
-                      if (eEnd && eEnd > eStart) {
-                          return dateStr >= eStart && dateStr < eEnd;
-                      } else {
-                          return dateStr === eStart;
-                      }
-                  });
-
-                  if (hasManualBackground) {
-                      classes.push("bg-white");
-                  }
-
-                  if (holidayName) {
-                      classes.push("text-red-500");
-                      if (!hasManualBackground && !multiSelectedDates.has(dateStr)) classes.push("bg-red-50");
-                  } else if (day === 0) {
-                      classes.push("text-red-500");
-                      if (!hasManualBackground && !multiSelectedDates.has(dateStr)) classes.push("bg-red-50");
-                  } else if (day === 6) {
-                      classes.push("text-blue-500");
-                      if (!hasManualBackground && !multiSelectedDates.has(dateStr)) classes.push("bg-blue-50");
-                  }
-
-                  return classes;
-              }}
-              dayCellContent={renderDayCellContent}              select={handleDateSelect}
+              
+              // dayCellClassNames でマス目をハイライト
+              dayCellClassNames={(arg) => getClassNameForDate(arg.date)}
+              
+              // dayHeaderClassNames でヘッダー(日付数字)もハイライト
+              dayHeaderClassNames={(arg) => getClassNameForDate(arg.date)}
+              
+              dayCellContent={renderDayCellContent}
+              select={handleDateSelect}
               eventClick={handleEventClick}
               businessHours={{
                 daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
@@ -951,16 +1033,15 @@ export const Calendar: React.FC = () => {
             />
           </div>
 
-          {/* ... サイドバーの表示ロジックはそのまま ... */}
           {(isPreviewVisible || (isFormVisible && user) || (isSettingsVisible && user)) && (
-            <div className="w-1/3 min-w-[400px] bg-white border-l pl-4 py-2 overflow-y-auto shadow-xl z-10">
+            <div className="no-scrollbar w-[400px] min-w-[400px] max-w-[400px] flex-shrink-0 bg-white border-l p-4 overflow-y-auto shadow-xl z-10 box-border">
               
               {isSettingsVisible && user && (
                 <BackgroundSettings 
                   events={events}
                   onAdd={handleAddBackground}
                   onDelete={handleDeleteEvent}
-                  onClose={() => setIsSettingsVisible(false)}
+                  onClose={handleCloseSettings}
                   startDate={bgStartDate}
                   setStartDate={setBgStartDate}
                   endDate={bgEndDate}
@@ -983,26 +1064,15 @@ export const Calendar: React.FC = () => {
 
               {isFormVisible && user && !isSettingsVisible && (
                 <>
-                  <h2 className="text-xl font-semibold mb-4">
-                    {formData?.id ? "予定の編集" : 
-                     multiSelectedDates.size > 0 ? `${multiSelectedDates.size}日分を一括登録` : "予定の追加"}
-                  </h2>
                   <ScheduleForm
                     initialEvent={formData}
                     onSubmit={handleSaveEvent}
                     onDelete={handleDeleteEvent}
                     onClose={handleCloseForm}
+                    formTitle={scheduleFormTitle}
+                    // ★ onBulkDeleteは「1日以上」で渡すが、表示はしない
+                    onBulkDelete={multiSelectedDates.size > 0 && !formData?.id ? handleDeleteFromMultiSelect : undefined}
                   />
-                  {multiSelectedDates.size > 0 && !formData?.id && (
-                    <div className="mt-4 pt-4 border-t">
-                      <button 
-                        onClick={handleDeleteFromMultiSelect}
-                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded font-bold transition-colors"
-                      >
-                        選択した日付の予定を一括削除
-                      </button>
-                    </div>
-                  )}
                 </>
               )}
             </div>
