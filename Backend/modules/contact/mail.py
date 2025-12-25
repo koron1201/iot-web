@@ -3,15 +3,24 @@ import os
 import json
 from datetime import datetime
 from typing import Optional
+import logging
 
 # Discord Webhook設定
 # DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "YOUR_DISCORD_WEBHOOK_URL_HERE")
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 ENABLE_DISCORD = os.getenv("ENABLE_DISCORD", "true").lower() == "true"
 
-# デバッグ用ログ
-print(f"DEBUG: DISCORD_WEBHOOK_URL = {DISCORD_WEBHOOK_URL}")
-print(f"DEBUG: ENABLE_DISCORD = {ENABLE_DISCORD}")
+logger = logging.getLogger(__name__)
+
+def _mask_secret(value: str | None, *, visible: int = 6) -> str:
+    if not value:
+        return "(not set)"
+    if len(value) <= visible:
+        return "*" * len(value)
+    return f"{value[:visible]}...({'*' * 6})"
+
+# NOTE: シークレットをログに出さない（Webhook URL は漏洩リスクが高い）
+logger.info("Discord notify enabled=%s, webhook=%s", ENABLE_DISCORD, _mask_secret(DISCORD_WEBHOOK_URL))
 
 def send_contact_discord(mail: str, detail: str) -> bool:
     """

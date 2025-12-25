@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import type { SubmissionProject } from "./types";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/config/api";
 
 interface Carousel3DProps {
   projects: SubmissionProject[];
@@ -88,7 +89,7 @@ export const Carousel3D: React.FC<Carousel3DProps> = ({ projects, onSelect }) =>
           const rawPath = project.thumbnail_path || project.file_path
           
           const imageUrl = rawPath
-            ? `http://localhost:8000/${sanitizeFilePath(rawPath).split('/').map(encodeURIComponent).join('/')}` 
+            ? `${API_BASE_URL}/${sanitizeFilePath(rawPath).split('/').map(encodeURIComponent).join('/')}` 
             : null
 
           return (

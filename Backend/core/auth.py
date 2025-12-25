@@ -6,12 +6,14 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from dotenv import load_dotenv 
+from pathlib import Path
 
 from core.database import SessionLocal
 from modules.auth import schemas
 
 # .env ファイルを読み込む
-load_dotenv()
+backend_env_path = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=backend_env_path, override=True)
 
 # --- セキュリティ設定 ---
 

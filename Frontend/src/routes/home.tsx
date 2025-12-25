@@ -7,6 +7,7 @@ import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
 import { newsItems } from "@/data/news"
 import type { NewsItem as SharedNewsItem } from "@/data/news"
 import { cn } from "@/lib/utils"
+import { apiUrl } from "@/config/api"
 
 const RESEARCH_FIELDS = [
   {
@@ -77,7 +78,7 @@ const TIME_SCALE = 0.6
 const LABEL_HEIGHT_OFFSET = 2.4
 const LABEL_FLOAT_AMPLITUDE = 0.15
 const STAR_COUNT = 1500
-const METAVERSE_APP_URL = "http://localhost:8000/static/metaberse/index.html"
+const METAVERSE_APP_URL = apiUrl("/static/metaberse/index.html")
 
 const createLabelSprite = (text: string) => {
   const baseWidth = 420

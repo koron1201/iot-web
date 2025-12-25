@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { Card } from '../components/ui/card'
 import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
+import { apiUrl } from "@/config/api"
 
 export const Contact: React.FC = () => {
   const [mail, setMail] = useState('')
@@ -19,7 +20,7 @@ export const Contact: React.FC = () => {
     setMessage('')
 
     try {
-      const response = await fetch('http://localhost:8000/contact/', {
+      const response = await fetch(apiUrl('/contact/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

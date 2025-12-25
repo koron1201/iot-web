@@ -1,6 +1,7 @@
 // ★ 修正: 不要な 'React' のインポートを削除
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { API_BASE_URL } from "@/config/api";
 
 // APIから返ってくるトークンの型
 interface TokenResponse {
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAuthenticated = !!user; 
 
-  const API_URL = "http://localhost:8000/auth";
+  const API_URL = `${API_BASE_URL}/auth`;
 
   // 3. ログイン処理
   const login = async (username: string, password: string) => {

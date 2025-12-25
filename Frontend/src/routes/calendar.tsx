@@ -11,6 +11,7 @@ import BackgroundSettings from "@/components/calendar/Form/BackgroundSettings";
 import ScheduleForm from "@/components/calendar/Form/ScheduleForm";
 import type { ScheduleFormData } from "@/components/calendar/Form/ScheduleForm";
 import { isHoliday } from "japanese-holidays";
+import { API_BASE_URL } from "@/config/api";
 
 // --- 型定義 ---
 interface ApiEvent {
@@ -193,7 +194,7 @@ export const Calendar: React.FC = () => {
   const [bgStartDate, setBgStartDate] = useState("");
   const [bgEndDate, setBgEndDate] = useState("");
 
-  const API_URL = "http://localhost:8000/calendar/";
+  const API_URL = `${API_BASE_URL}/calendar/`;
 
   // モード切替時にFullCalendarの選択を解除
   useEffect(() => {

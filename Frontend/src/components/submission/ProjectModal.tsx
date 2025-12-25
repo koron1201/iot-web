@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useSpring, useMotionValue, useTransform } from
 import { X, Play, ExternalLink, Cpu, Database, ShieldCheck, Globe, Activity, Zap, Code2, Layers } from "lucide-react"
 
 import type { ProjectModalProps } from "./types"
+import { apiUrl } from "@/config/api"
 
 // --- Helper Components ---
 
@@ -141,7 +142,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose, on
                                     <>
                                         <div className="absolute inset-0 bg-cyan-950/50 mix-blend-multiply z-10" />
                                         <img 
-                                            src={`http://localhost:8000/${project.thumbnail_path.replace(/^\/+/, "").split('/').map(encodeURIComponent).join('/')}`} 
+                                            src={apiUrl(project.thumbnail_path.replace(/^\/+/, "").split('/').map(encodeURIComponent).join('/'))} 
                                             alt={project.title} 
                                             className="h-full w-full object-cover opacity-80 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100" 
                                         />

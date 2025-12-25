@@ -6,8 +6,9 @@ import type { SubmissionProject } from "@/components/submission/types"
 import { deliverables } from "@/data/deliverables"
 import { Background } from "@/components/submission/Background"
 import { Carousel3D } from "@/components/submission/Carousel3D"
+import { API_BASE_URL, apiUrl } from "@/config/api"
 
-const SUBMISSION_ENDPOINT = "http://localhost:8000/submission/"
+const SUBMISSION_ENDPOINT = apiUrl("/submission/")
 const RARITY_PALETTE = [5, 4, 4, 3, 5, 4, 3, 5]
 
 const sanitizeFilePath = (value: string) => value.replace(/^\/+/, "")
@@ -199,7 +200,7 @@ export const Submission: React.FC = () => {
     setSelectedProject(project)
     if (project.file_path && typeof window !== "undefined") {
       const sanitizedPath = sanitizeFilePath(project.file_path)
-      const url = `http://localhost:8000/${sanitizedPath}`
+      const url = `${API_BASE_URL}/${sanitizedPath}`
       // Don't auto open - let the modal handle details, or button in modal
       // But preserving existing logic if needed:
       // window.open(url, "_blank", "noopener,noreferrer") 
@@ -215,7 +216,7 @@ export const Submission: React.FC = () => {
       const sanitizedPath = sanitizeFilePath(selectedProject.file_path)
       // 日本語ファイル名などに対応するためのURLエンコード
       const encodedPath = sanitizedPath.split('/').map(encodeURIComponent).join('/')
-      const url = `http://localhost:8000/${encodedPath}`
+      const url = `${API_BASE_URL}/${encodedPath}`
       window.open(url, "_blank", "noopener,noreferrer")
     }
   }, [selectedProject])

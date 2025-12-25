@@ -2,6 +2,7 @@ import {motion } from "framer-motion"
 import {useState, useEffect } from "react";
 import { cn } from "@/lib/utils"
 import { CosmicNavbar } from "@/components/layout/CosmicNavbar"
+import { apiUrl } from "@/config/api"
 
 //{/*研究データの型の定義*/}
 interface ResearchProps{
@@ -42,7 +43,7 @@ export const Research: React.FC = () => {
   //FastAPIからデータを取得
   const fetchResearch = async () => {
     try {
-      const response = await fetch("http://localhost:8000/research/");
+      const response = await fetch(apiUrl("/research/"));
       const data = await response.json();
       setResearchList(data);  // ステートにセット
     } catch (error) {
@@ -94,7 +95,7 @@ export const Research: React.FC = () => {
             >
               {/*画像*/}
               <img
-              src={`http://localhost:8000/research/image/${item.id}?t=${Date.now()}`}
+              src={apiUrl(`/research/image/${item.id}?t=${Date.now()}`)}
               alt={item.title}
               style={{
                 width: "100%",
