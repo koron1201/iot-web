@@ -63,13 +63,13 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ open, onOpenChange, onSuccess
             </Button>
             <Button
               type="button"
-              onClick={() => {
-                const ok = login(id.trim(), password)
-                if (ok) {
+              onClick={async () => {
+                try {
+                  await login(id.trim(), password)
                   setError("")
                   onOpenChange(false)
                   onSuccess()
-                } else {
+                } catch {
                   setError("IDまたはパスワードが違います")
                 }
               }}

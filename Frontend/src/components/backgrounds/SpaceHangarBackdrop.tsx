@@ -70,8 +70,9 @@ export const SpaceHangarBackdrop: React.FC = () => {
     createPlanet(0.9, 0xd66bff, new THREE.Vector3(0.5, 2.8, -3.5))
 
     const planetHalos: THREE.Mesh[] = planets.map((planet) => {
+      const geometry = planet.geometry as THREE.SphereGeometry
       const halo = new THREE.Mesh(
-        new THREE.RingGeometry(planet.geometry.parameters.radius * 1.2, planet.geometry.parameters.radius * 1.5, 64),
+        new THREE.RingGeometry(geometry.parameters.radius * 1.2, geometry.parameters.radius * 1.5, 64),
         new THREE.MeshBasicMaterial({
           color: 0xffffff,
           transparent: true,
