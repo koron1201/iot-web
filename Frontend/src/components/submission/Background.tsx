@@ -17,11 +17,11 @@ function CameraRig({ mouse }: { mouse: React.MutableRefObject<[number, number]> 
 }
 
 function Nebula() {
+  const CloudAny = Cloud as any
   return (
     <group>
       <Float speed={1.5} rotationIntensity={0.2} floatIntensity={1}>
-        {/* @ts-ignore: drei Cloud types mismatch */}
-        <Cloud 
+        <CloudAny 
           opacity={0.3} 
           speed={0.4} // Rotation speed
           width={20} // Width of the full cloud
@@ -31,8 +31,7 @@ function Nebula() {
           position={[-10, -5, -20]}
           color="#1e1b4b" // Deep Indigo
         />
-        {/* @ts-ignore: drei Cloud types mismatch */}
-        <Cloud 
+        <CloudAny 
           opacity={0.3} 
           speed={0.4} 
           width={20} 
