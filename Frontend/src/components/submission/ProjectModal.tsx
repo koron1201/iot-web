@@ -13,7 +13,7 @@ const ScrambleText = ({ text, className, delay = 0 }: { text: string; className?
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*"
   
   useEffect(() => {
-    let timeout: NodeJS.Timeout
+    let timeout: any // Changed from NodeJS.Timeout to any for compatibility
     let iteration = 0
     
     const startScramble = () => {

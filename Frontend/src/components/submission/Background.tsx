@@ -135,12 +135,14 @@ function GalaxyParticles() {
     return (
         <points ref={mesh}>
             <bufferGeometry>
+                {/* @ts-ignore: R3F type mismatch workaround */}
                 <bufferAttribute
                     attach="attributes-position"
                     count={count}
                     array={positions}
                     itemSize={3}
                 />
+                {/* @ts-ignore: R3F type mismatch workaround */}
                 <bufferAttribute 
                     attach="attributes-size"
                     count={count}
