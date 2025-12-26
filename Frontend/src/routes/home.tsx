@@ -9,6 +9,11 @@ import type { NewsItem as SharedNewsItem } from "@/data/news"
 import { cn } from "@/lib/utils"
 import { apiUrl } from "@/config/api"
 
+// Import models
+import rockModelPath from "@/assets/models/rock.glb?url"
+import rocketModelPath from "@/assets/models/rocket.glb?url"
+import satelliteModelPath from "@/assets/models/satellite.glb?url"
+
 const RESEARCH_FIELDS = [
   {
     title: "IoT / CPS",
@@ -189,9 +194,9 @@ export const Home = () => {
 
   const planetConfigs = useMemo<PlanetConfig[]>(
     () => [
-      { label: "ニュース", color: 0xff6b9d, modelPath: "/rock.glb",meta: { type: "info", label: "ニュース", infoKey: "news" } },
-      { label: "お問い合わせ", color: 0x6bffb9,modelPath: "/rocket.glb", meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
-      { label: "研究分野", color: 0xffd96b,modelPath: "/satellite.glb", meta: { type: "info", label: "研究分野", infoKey: "fields" } },
+      { label: "ニュース", color: 0xff6b9d, modelPath: rockModelPath, meta: { type: "info", label: "ニュース", infoKey: "news" } },
+      { label: "お問い合わせ", color: 0x6bffb9, modelPath: rocketModelPath, meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
+      { label: "研究分野", color: 0xffd96b, modelPath: satelliteModelPath, meta: { type: "info", label: "研究分野", infoKey: "fields" } },
     ],
     []
   )
