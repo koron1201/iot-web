@@ -189,9 +189,9 @@ export const Home = () => {
 
   const planetConfigs = useMemo<PlanetConfig[]>(
     () => [
-      { label: "ニュース", color: 0xff6b9d, modelPath: "/石.glb",meta: { type: "info", label: "ニュース", infoKey: "news" } },
-      { label: "お問い合わせ", color: 0x6bffb9,modelPath: "/ロケット.glb", meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
-      { label: "研究分野", color: 0xffd96b,modelPath: "/人工衛星.glb", meta: { type: "info", label: "研究分野", infoKey: "fields" } },
+      { label: "ニュース", color: 0xff6b9d, modelPath: "/rock.glb",meta: { type: "info", label: "ニュース", infoKey: "news" } },
+      { label: "お問い合わせ", color: 0x6bffb9,modelPath: "/rocket.glb", meta: { type: "info", label: "お問い合わせ", infoKey: "contact" } },
+      { label: "研究分野", color: 0xffd96b,modelPath: "/satellite.glb", meta: { type: "info", label: "研究分野", infoKey: "fields" } },
     ],
     []
   )
