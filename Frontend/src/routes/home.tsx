@@ -259,10 +259,30 @@ export const Home = () => {
     // 新しいシェーダー太陽に置き換え
     const sunShaderMaterial = new THREE.ShaderMaterial({
       uniforms: { time: { value: 0 } },
-      vertexShader: `...`,
-      fragmentShader: `...`,
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        void main() {
+          vUv = uv;
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float time;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        void main() {
+          // シンプルな太陽風の表現
+          float noise = sin(vUv.y * 20.0 + time) * 0.1 + sin(vUv.x * 20.0 + time * 0.5) * 0.1;
+          vec3 color = vec3(1.0, 0.6, 0.1) + vec3(noise, noise * 0.5, 0.0);
+          float intensity = 1.05 - dot(vNormal, vec3(0.0, 0.0, 1.0));
+          vec3 atmosphere = vec3(1.0, 0.3, 0.0) * pow(intensity, 3.0);
+          gl_FragColor = vec4(color + atmosphere, 1.0);
+        }
+      `,
     })
-    const sunGeometry = new THREE.SphereGeometry(60, 128, 128)
+    const sunGeometry = new THREE.SphereGeometry(5, 64, 64)
     const sun = new THREE.Mesh(sunGeometry, sunShaderMaterial)
     sun.position.set(-50, -10, -50)
     scene.add(sun)
