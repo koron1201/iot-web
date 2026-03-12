@@ -50,7 +50,11 @@ const router = createBrowserRouter([
   //   path: "/register",
   //   element: <Register />,
   // }
-])
+],
+{
+  basename: "/iot-web"
+}
+)
 
 const container = document.getElementById("root")!
 createRoot(container).render(
