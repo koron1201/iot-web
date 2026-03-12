@@ -1,0 +1,10 @@
+# Contact Rate Limiting Configuration
+# 
+# これらの環境変数を設定してレート制限をカスタマイズできます
+# .env ファイルまたはシステム環境変数として設定してください
+
+# 制限時間内の最大リクエスト数（デフォルト: 3）
+CONTACT_MAX_REQUESTS=3
+
+# 制限時間の長さ（分）（デフォルト: 60）
+CONTACT_TIME_WINDOW=60
