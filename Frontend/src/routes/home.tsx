@@ -399,7 +399,7 @@ moon.scale.set(0.3, 0.3, 0.3)
 
 
     loader.load(
-      '/3.glb', 
+      '/iot-web/3.glb',
       (gltf:GLTF) => {
         console.log('GLB loaded:', gltf);
         planetModel = gltf.scene
